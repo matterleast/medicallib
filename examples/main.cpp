@@ -1,8 +1,11 @@
 #include <iostream>
-#include "Library.h"
+#include "MedicalLib/MedicalLib.h"
 
 int main() {
-    int result = add(2, 3);
-    std::cout << "2 + 3 = " << result << std::endl;
+    double weight = 70.0; // kg
+    double height = 1.75; // meters
+    double bmi = calculateBMI(weight, height);
+    std::cout << "Weight: " << weight << " kg, Height: " << height << " m" << std::endl;
+    std::cout << "Calculated BMI: " << bmi << std::endl;
     return 0;
 }
