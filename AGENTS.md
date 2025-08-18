@@ -31,6 +31,29 @@ To build the project, use the provided build scripts:
 
 The compiled library will be placed in `build/lib`, and the example executable will be in `build/examples/`.
 
+## Coding Standards
+
+### Doxygen Documentation
+
+All functions, classes, structs, enums, and public member variables must be documented using Doxygen-compatible comments. This ensures that the code is easy to understand and that high-quality documentation can be automatically generated.
+
+- Use `/** ... */` for multi-line comments.
+- Use `///` for single-line comments.
+- Use `@brief` to provide a short description.
+- Use `@param` to document function parameters.
+- Use `@return` to describe the return value.
+
+Example:
+```cpp
+/**
+ * @brief Calculates the Body Mass Index (BMI).
+ * @param weight_kg The weight in kilograms.
+ * @param height_m The height in meters.
+ * @return The calculated BMI.
+ */
+MEDICAL_LIB_API double calculateBMI(double weight_kg, double height_m);
+```
+
 ## Integration with Unreal Engine
 
 To use this library in an Unreal Engine plugin:

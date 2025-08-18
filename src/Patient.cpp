@@ -2,7 +2,11 @@
 #include <random>
 #include <algorithm> // For std::clamp
 
-// Helper function to generate random fluctuations
+/**
+ * @brief Helper function to generate random fluctuations from a normal distribution.
+ * @param stddev The standard deviation of the distribution.
+ * @return A random value.
+ */
 double getFluctuation(double stddev) {
     static std::random_device rd;
     static std::mt19937 gen(rd());
@@ -10,6 +14,11 @@ double getFluctuation(double stddev) {
     return d(gen);
 }
 
+/**
+ * @brief Initializes a new patient with baseline vital signs.
+ * @param patientId The ID for the new patient.
+ * @return A Patient struct with default healthy values.
+ */
 Patient initializePatient(int patientId) {
     Patient patient;
     patient.patientId = patientId;
@@ -22,6 +31,12 @@ Patient initializePatient(int patientId) {
     return patient;
 }
 
+/**
+ * @brief Updates the patient's vital signs based on the time elapsed.
+ * This function simulates minor, random fluctuations around a healthy baseline.
+ * @param patient The patient to update.
+ * @param deltaTime_s The time elapsed in seconds.
+ */
 void updatePatient(Patient& patient, double deltaTime_s) {
     // Baseline healthy values
     const double baseline_hr = 75.0;
