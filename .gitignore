@@ -39,3 +39,15 @@
 
 # debug information files
 *.dwo
+
+# Build directory
+/build/
+
+# IDE files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.vsproj
