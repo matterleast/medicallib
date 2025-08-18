@@ -1,0 +1,33 @@
+name: Build and Test
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ cmake doxygen graphviz
+
+      - name: Build
+        run: ./build.sh
+
+      - name: Generate Documentation
+        run: doxygen Doxyfile
+
+      - name: Upload Library Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: medical-lib
+          path: build/lib
+
+      - name: Upload Documentation Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: docs/html
