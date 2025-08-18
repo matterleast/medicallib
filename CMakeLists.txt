@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.10)
 project(MedicalLib)
 
 # Add the library
-add_library(MedicalLib SHARED src/MedicalLib.cpp)
+add_library(MedicalLib SHARED src/MedicalLib.cpp src/Patient.cpp)
 
 # Define MEDICAL_LIB_EXPORT, so that __declspec(dllexport) is used
 target_compile_definitions(MedicalLib PRIVATE MEDICAL_LIB_EXPORT)
