@@ -51,3 +51,13 @@
 *.njsproj
 *.sln
 *.vsproj
+
+# Python
+/.venv/
+
+# Sphinx
+/docs/_build/
+
+# Doxygen
+/docs/xml/
+/docs/latex/
