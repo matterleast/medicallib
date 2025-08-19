@@ -16,17 +16,16 @@ FILE_PATTERNS          = *.h *.cpp
 RECURSIVE              = YES
 EXCLUDE_PATTERNS       =
 EXCLUDE_SYMBOLS        =
+MACRO_EXPANSION        = YES
+PREDEFINED             = MEDICAL_LIB_API=
 
 # HTML
-GENERATE_HTML          = YES
-HTML_OUTPUT            = html
-HTML_FILE_EXTENSION    = .html
-HTML_HEADER            =
-HTML_FOOTER            =
-HTML_STYLESHEET        =
-HTML_COLORSTYLE_HUE    = 220
-HTML_COLORSTYLE_SAT    = 100
-HTML_COLORSTYLE_GAMMA  = 80
+GENERATE_HTML          = NO
+
+# XML
+GENERATE_XML           = YES
+XML_OUTPUT             = xml
+XML_PROGRAMLISTING     = YES
 
 # Diagrams
 HAVE_DOT               = YES
