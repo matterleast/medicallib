@@ -10,8 +10,4 @@ Welcome to MedicalLib's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-API Reference
--------------
-
-.. doxygenfile:: MedicalLib/Patient.h
-   :project: MedicalLib
+   api
