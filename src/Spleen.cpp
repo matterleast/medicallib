@@ -2,6 +2,7 @@
 #include <random>
 #include <algorithm>
 #include <sstream>
+#include <iomanip>
 
 // Helper function for random fluctuations
 static double getFluctuation(double stddev) {
@@ -11,29 +12,45 @@ static double getFluctuation(double stddev) {
     return d(gen);
 }
 
-Spleen::Spleen(int id) : Organ(id, "Spleen"), redBloodCellCount(4.5), whiteBloodCellCount(7.5) {}
+Spleen::Spleen(int id) : Organ(id, "Spleen") {
+    // Initialize pulp components
+    redPulp = {1.0, 0.5};
+    whitePulp = {1500.0, 500.0};
+}
 
 void Spleen::update(double deltaTime_s) {
-    const double baseline_rbc = 4.5;
-    const double baseline_wbc = 7.5;
-    const double theta = 0.02;
-    const double rbc_stddev = 0.01;
-    const double wbc_stddev = 0.05;
+    // In a real model, these values would change in response to infection or disease.
+    // For now, we just simulate minor fluctuations around a healthy baseline.
 
-    redBloodCellCount += theta * (baseline_rbc - redBloodCellCount) * deltaTime_s + getFluctuation(rbc_stddev * deltaTime_s);
-    whiteBloodCellCount += theta * (baseline_wbc - whiteBloodCellCount) * deltaTime_s + getFluctuation(wbc_stddev * deltaTime_s);
+    // Red pulp fluctuations
+    redPulp.filtrationRate += getFluctuation(0.01);
+    redPulp.rbcBreakdownRate += getFluctuation(0.005);
 
-    redBloodCellCount = std::clamp(redBloodCellCount, 4.0, 5.0);
-    whiteBloodCellCount = std::clamp(whiteBloodCellCount, 5.0, 10.0);
+    // White pulp fluctuations
+    whitePulp.lymphocyteCount += getFluctuation(1.0);
+    whitePulp.macrophageCount += getFluctuation(0.5);
+
+    // Clamp to healthy ranges
+    redPulp.filtrationRate = std::clamp(redPulp.filtrationRate, 0.9, 1.1);
+    redPulp.rbcBreakdownRate = std::clamp(redPulp.rbcBreakdownRate, 0.45, 0.55);
+    whitePulp.lymphocyteCount = std::clamp(whitePulp.lymphocyteCount, 1400.0, 1600.0);
+    whitePulp.macrophageCount = std::clamp(whitePulp.macrophageCount, 450.0, 550.0);
 }
 
 std::string Spleen::getSummary() const {
     std::stringstream ss;
-    ss << "Type: " << organType << " (ID: " << organId << ")\n"
-       << "  RBC Count: " << redBloodCellCount << " million/uL\n"
-       << "  WBC Count: " << whiteBloodCellCount << " thousand/uL";
+    ss.precision(1);
+    ss << std::fixed;
+    ss << "--- Spleen Summary ---\n"
+       << "--- Red Pulp ---\n"
+       << "Filtration Rate: " << redPulp.filtrationRate << "\n"
+       << "RBC Breakdown Rate: " << getRbcBreakdownRate() << "\n"
+       << "--- White Pulp ---\n"
+       << "Lymphocyte Count: " << getLymphocyteCount() << " million\n"
+       << "Macrophage Count: " << whitePulp.macrophageCount << " million\n";
     return ss.str();
 }
 
-double Spleen::getRedBloodCellCount() const { return redBloodCellCount; }
-double Spleen::getWhiteBloodCellCount() const { return whiteBloodCellCount; }
+// --- Getters Implementation ---
+double Spleen::getRbcBreakdownRate() const { return redPulp.rbcBreakdownRate; }
+double Spleen::getLymphocyteCount() const { return whitePulp.lymphocyteCount; }

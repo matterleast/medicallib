@@ -2,6 +2,7 @@
 #include <random>
 #include <algorithm>
 #include <sstream>
+#include <iomanip>
 
 // Helper function for random fluctuations
 static double getFluctuation(double stddev) {
@@ -11,29 +12,59 @@ static double getFluctuation(double stddev) {
     return d(gen);
 }
 
-Intestines::Intestines(int id) : Organ(id, "Intestines"), nutrientAbsorptionRate(1.0), waterAbsorptionRate(0.1) {}
+Intestines::Intestines(int id)
+    : Organ(id, "Intestines"),
+      chymeVolume_mL(0.0) {
+
+    // Initialize segments with typical values
+    duodenum = {"Duodenum", 0.25, 1.0, 0.5, 0.1};
+    jejunum = {"Jejunum", 2.5, 1.0, 1.0, 0.3};
+    ileum = {"Ileum", 3.0, 1.0, 0.8, 0.5};
+    colon = {"Colon", 1.5, 0.5, 0.1, 1.0}; // High water absorption
+}
 
 void Intestines::update(double deltaTime_s) {
-    const double baseline_nutrient_abs = 1.0;
-    const double baseline_water_abs = 0.1;
-    const double theta = 0.05;
-    const double nutrient_abs_stddev = 0.02;
-    const double water_abs_stddev = 0.005;
+    // For demonstration, simulate chyme arriving from the stomach
+    static double timeSinceChyme = 0.0;
+    timeSinceChyme += deltaTime_s;
+    if (timeSinceChyme > 25.0) {
+        receiveChyme(10.0); // Receive 10mL of chyme
+        timeSinceChyme = 0.0;
+    }
 
-    nutrientAbsorptionRate += theta * (baseline_nutrient_abs - nutrientAbsorptionRate) * deltaTime_s + getFluctuation(nutrient_abs_stddev * deltaTime_s);
-    waterAbsorptionRate += theta * (baseline_water_abs - waterAbsorptionRate) * deltaTime_s + getFluctuation(water_abs_stddev * deltaTime_s);
+    if (chymeVolume_mL > 0) {
+        // Simplified absorption model: total absorption is an average of all segments
+        double totalNutrientAbsorption = (duodenum.nutrientAbsorptionRate + jejunum.nutrientAbsorptionRate + ileum.nutrientAbsorptionRate + colon.nutrientAbsorptionRate) / 4.0;
+        double totalWaterAbsorption = (duodenum.waterAbsorptionRate + jejunum.waterAbsorptionRate + ileum.waterAbsorptionRate + colon.waterAbsorptionRate) / 4.0;
 
-    nutrientAbsorptionRate = std::clamp(nutrientAbsorptionRate, 0.8, 1.2);
-    waterAbsorptionRate = std::clamp(waterAbsorptionRate, 0.08, 0.12);
+        // Reduce chyme volume based on absorption
+        double absorbedVolume = (totalNutrientAbsorption * 0.01 + totalWaterAbsorption * 0.1) * deltaTime_s;
+        chymeVolume_mL -= absorbedVolume;
+        chymeVolume_mL = std::max(0.0, chymeVolume_mL);
+    }
+
+    // Fluctuate motility slightly
+    duodenum.motility += getFluctuation(0.01);
+    duodenum.motility = std::clamp(duodenum.motility, 0.9, 1.1);
+}
+
+void Intestines::receiveChyme(double volume_mL) {
+    chymeVolume_mL += volume_mL;
 }
 
 std::string Intestines::getSummary() const {
     std::stringstream ss;
-    ss << "Type: " << organType << " (ID: " << organId << ")\n"
-       << "  Nutrient Absorption: " << nutrientAbsorptionRate << "\n"
-       << "  Water Absorption: " << waterAbsorptionRate << " ml/s";
+    ss.precision(2);
+    ss << std::fixed;
+    ss << "--- Intestines Summary ---\n"
+       << "Total Chyme Volume: " << getTotalChymeVolume() << " mL\n\n"
+       << "--- Segments ---\n"
+       << duodenum.name << ": Motility " << duodenum.motility << "\n"
+       << jejunum.name << ": Nutrient Abs. " << jejunum.nutrientAbsorptionRate << "\n"
+       << ileum.name << ": Water Abs. " << ileum.waterAbsorptionRate << "\n"
+       << colon.name << ": Water Abs. " << colon.waterAbsorptionRate << "\n";
     return ss.str();
 }
 
-double Intestines::getNutrientAbsorptionRate() const { return nutrientAbsorptionRate; }
-double Intestines::getWaterAbsorptionRate() const { return waterAbsorptionRate; }
+// --- Getters Implementation ---
+double Intestines::getTotalChymeVolume() const { return chymeVolume_mL; }

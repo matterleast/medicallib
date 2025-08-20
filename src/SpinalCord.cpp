@@ -2,6 +2,7 @@
 #include <random>
 #include <algorithm>
 #include <sstream>
+#include <iomanip>
 
 // Helper function for random fluctuations
 static double getFluctuation(double stddev) {
@@ -11,23 +12,52 @@ static double getFluctuation(double stddev) {
     return d(gen);
 }
 
-SpinalCord::SpinalCord(int id) : Organ(id, "SpinalCord"), signalConductionVelocity(70.0) {}
+SpinalCord::SpinalCord(int id)
+    : Organ(id, "SpinalCord"),
+      reflexArcIntact(true) {
+
+    // Initialize major pathways
+    descendingMotorTract = {"Descending Motor Tract", SignalStatus::NORMAL, 75.0};
+    ascendingSensoryTract = {"Ascending Sensory Tract", SignalStatus::NORMAL, 65.0};
+}
 
 void SpinalCord::update(double deltaTime_s) {
-    const double baseline_velocity = 70.0;
-    const double theta = 0.01;
-    const double velocity_stddev = 0.1;
+    // In a healthy state, status doesn't change.
+    // Pathology models would alter these values.
+    // For now, we just simulate minor fluctuations in a healthy velocity.
+    descendingMotorTract.conductionVelocity_m_per_s += getFluctuation(0.1);
+    descendingMotorTract.conductionVelocity_m_per_s = std::clamp(descendingMotorTract.conductionVelocity_m_per_s, 70.0, 80.0);
 
-    signalConductionVelocity += theta * (baseline_velocity - signalConductionVelocity) * deltaTime_s + getFluctuation(velocity_stddev * deltaTime_s);
+    ascendingSensoryTract.conductionVelocity_m_per_s += getFluctuation(0.1);
+    ascendingSensoryTract.conductionVelocity_m_per_s = std::clamp(ascendingSensoryTract.conductionVelocity_m_per_s, 60.0, 70.0);
 
-    signalConductionVelocity = std::clamp(signalConductionVelocity, 60.0, 80.0);
+    // Reflex arc is a simple boolean for now.
+    reflexArcIntact = (descendingMotorTract.status == SignalStatus::NORMAL && ascendingSensoryTract.status == SignalStatus::NORMAL);
+}
+
+std::string SpinalCord::statusToString(SignalStatus status) const {
+    switch (status) {
+        case SignalStatus::NORMAL: return "Normal";
+        case SignalStatus::IMPAIRED: return "Impaired";
+        case SignalStatus::SEVERED: return "Severed";
+        default: return "Unknown";
+    }
 }
 
 std::string SpinalCord::getSummary() const {
     std::stringstream ss;
-    ss << "Type: " << organType << " (ID: " << organId << ")\n"
-       << "  Signal Velocity: " << signalConductionVelocity << " m/s";
+    ss << "--- Spinal Cord Summary ---\n"
+       << "Motor Pathway (" << descendingMotorTract.name << "): "
+       << statusToString(descendingMotorTract.status) << " ("
+       << std::fixed << std::setprecision(1) << descendingMotorTract.conductionVelocity_m_per_s << " m/s)\n"
+       << "Sensory Pathway (" << ascendingSensoryTract.name << "): "
+       << statusToString(ascendingSensoryTract.status) << " ("
+       << std::fixed << std::setprecision(1) << ascendingSensoryTract.conductionVelocity_m_per_s << " m/s)\n"
+       << "Reflex Arc Intact: " << (isReflexArcIntact() ? "Yes" : "No") << "\n";
     return ss.str();
 }
 
-double SpinalCord::getSignalConductionVelocity() const { return signalConductionVelocity; }
+// --- Getters Implementation ---
+SignalStatus SpinalCord::getMotorPathwayStatus() const { return descendingMotorTract.status; }
+SignalStatus SpinalCord::getSensoryPathwayStatus() const { return ascendingSensoryTract.status; }
+bool SpinalCord::isReflexArcIntact() const { return reflexArcIntact; }
