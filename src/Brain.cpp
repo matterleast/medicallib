@@ -2,8 +2,9 @@
 #include <random>
 #include <algorithm>
 #include <sstream>
+#include <cmath>
 
-// Helper function for random fluctuations
+// Helper for random fluctuations
 static double getFluctuation(double stddev) {
     static std::random_device rd;
     static std::mt19937 gen(rd());
@@ -11,29 +12,83 @@ static double getFluctuation(double stddev) {
     return d(gen);
 }
 
-Brain::Brain(int id) : Organ(id, "Brain"), consciousnessLevel(1.0), cerebralBloodFlow(50.0) {}
+Brain::Brain(int id)
+    : Organ(id, "Brain"),
+      gcsScore(15),
+      intracranialPressure_mmHg(10.0),
+      cerebralPerfusionPressure_mmHg(80.0),
+      meanArterialPressure_mmHg(90.0), // Placeholder value
+      totalTime_s(0.0),
+      eegHistorySize(200) {
+
+    // Initialize Brain Regions
+    frontalLobe = {"Frontal Lobe", 0.8, 50.0};
+    temporalLobe = {"Temporal Lobe", 0.7, 50.0};
+    parietalLobe = {"Parietal Lobe", 0.7, 50.0};
+    occipitalLobe = {"Occipital Lobe", 0.8, 55.0};
+    cerebellum = {"Cerebellum", 0.6, 60.0};
+}
 
 void Brain::update(double deltaTime_s) {
-    const double baseline_consciousness = 1.0;
-    const double baseline_cbf = 50.0;
-    const double theta = 0.05; // Slower reversion for brain metrics
-    const double consciousness_stddev = 0.001;
-    const double cbf_stddev = 0.5;
+    totalTime_s += deltaTime_s;
 
-    consciousnessLevel += theta * (baseline_consciousness - consciousnessLevel) * deltaTime_s + getFluctuation(consciousness_stddev * deltaTime_s);
-    cerebralBloodFlow += theta * (baseline_cbf - cerebralBloodFlow) * deltaTime_s + getFluctuation(cbf_stddev * deltaTime_s);
+    // In a real scenario, MAP would be provided by the circulatory system (Heart)
+    // For now, we'll just keep it stable with minor fluctuations.
+    meanArterialPressure_mmHg += getFluctuation(0.1);
+    meanArterialPressure_mmHg = std::clamp(meanArterialPressure_mmHg, 85.0, 95.0);
 
-    consciousnessLevel = std::clamp(consciousnessLevel, 0.0, 1.0);
-    cerebralBloodFlow = std::clamp(cerebralBloodFlow, 40.0, 60.0);
+    updateActivity(deltaTime_s);
+    updatePressures(meanArterialPressure_mmHg);
+
+    // Update EEG data
+    eegData.push_front(generateEegValue());
+    if (eegData.size() > eegHistorySize) {
+        eegData.pop_back();
+    }
+}
+
+void Brain::updateActivity(double deltaTime_s) {
+    // Simulate minor fluctuations in brain activity
+    frontalLobe.activityLevel += getFluctuation(0.005);
+    frontalLobe.activityLevel = std::clamp(frontalLobe.activityLevel, 0.7, 0.9);
+
+    // GCS is a clinical score, doesn't typically change second-to-second.
+    // This is a placeholder for future, more complex pathology simulation.
+    gcsScore = 15;
+}
+
+void Brain::updatePressures(double meanArterialPressure) {
+    // Autoregulation: Brain tries to maintain constant CPP
+    // Simplified model: ICP drifts slowly
+    intracranialPressure_mmHg += getFluctuation(0.01);
+    intracranialPressure_mmHg = std::clamp(intracranialPressure_mmHg, 8.0, 12.0);
+
+    cerebralPerfusionPressure_mmHg = meanArterialPressure - intracranialPressure_mmHg;
+    cerebralPerfusionPressure_mmHg = std::max(0.0, cerebralPerfusionPressure_mmHg);
+}
+
+double Brain::generateEegValue() {
+    // Super simplified EEG: combination of a few sine waves (alpha, beta)
+    double alpha_wave = 0.5 * sin(2 * M_PI * 10 * totalTime_s); // 10 Hz
+    double beta_wave = 0.3 * sin(2 * M_PI * 20 * totalTime_s);  // 20 Hz
+    double noise = getFluctuation(0.1);
+    return (alpha_wave + beta_wave + noise) * 20; // Scaled to microvolts
 }
 
 std::string Brain::getSummary() const {
     std::stringstream ss;
-    ss << "Type: " << organType << " (ID: " << organId << ")\n"
-       << "  Consciousness Level: " << consciousnessLevel * 100 << "%\n"
-       << "  Cerebral Blood Flow: " << cerebralBloodFlow << " ml/100g/min";
+    ss.precision(1);
+    ss << std::fixed;
+    ss << "--- Brain Summary ---\n"
+       << "Glasgow Coma Scale (GCS): " << getGCS() << "\n"
+       << "Intracranial Pressure (ICP): " << getIntracranialPressure() << " mmHg\n"
+       << "Mean Arterial Pressure (MAP): " << meanArterialPressure_mmHg << " mmHg\n"
+       << "Cerebral Perfusion (CPP): " << getCerebralPerfusionPressure() << " mmHg\n";
     return ss.str();
 }
 
-double Brain::getConsciousnessLevel() const { return consciousnessLevel; }
-double Brain::getCerebralBloodFlow() const { return cerebralBloodFlow; }
+// --- Getters Implementation ---
+int Brain::getGCS() const { return gcsScore; }
+double Brain::getIntracranialPressure() const { return intracranialPressure_mmHg; }
+double Brain::getCerebralPerfusionPressure() const { return cerebralPerfusionPressure_mmHg; }
+const std::deque<double>& Brain::getEegWaveform() const { return eegData; }
