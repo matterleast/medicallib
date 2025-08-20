@@ -8,9 +8,9 @@
  * @brief Represents a functional unit of the kidney.
  */
 struct Nephron {
-    std::string id;
-    double filtrationEfficiency; // 0.0 to 1.0
-    bool isDamaged;
+    std::string id;                 ///< The unique ID of the nephron.
+    double filtrationEfficiency;    ///< The filtration efficiency, normalized [0.0, 1.0].
+    bool isDamaged;                 ///< True if the nephron has sustained damage.
 };
 
 /**

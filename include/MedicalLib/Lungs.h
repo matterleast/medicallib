@@ -18,17 +18,17 @@ enum class RespiratoryState {
  * @brief Represents a single lobe of the lung.
  */
 struct Lobe {
-    std::string name;
-    double volume_mL;
-    double compliance; // How easily it inflates
+    std::string name;   ///< The name of the lobe.
+    double volume_mL;   ///< The current volume of air in the lobe in mL.
+    double compliance;  ///< The measure of the lung's ability to stretch and expand.
 };
 
 /**
  * @brief Represents a major airway.
  */
 struct Bronchus {
-    std::string name;
-    double resistance; // Airflow resistance
+    std::string name;   ///< The name of the bronchus.
+    double resistance;  ///< The resistance to airflow.
 };
 
 /**

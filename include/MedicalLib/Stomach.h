@@ -18,8 +18,8 @@ enum class GastricState {
  * @brief Represents the mixture of partially digested food and gastric juices.
  */
 struct Chyme {
-    double volume_mL;
-    double acidity_pH;
+    double volume_mL;   ///< The volume of chyme in mL.
+    double acidity_pH;  ///< The pH of the chyme.
 };
 
 /**

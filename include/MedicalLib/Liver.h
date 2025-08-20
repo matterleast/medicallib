@@ -8,9 +8,9 @@
  * @brief Represents a functional unit of the liver.
  */
 struct HepaticLobule {
-    std::string id;
-    double metabolicActivity; // A factor from 0.0 to 1.0+
-    bool isDamaged;
+    std::string id;             ///< The unique ID of the lobule.
+    double metabolicActivity;   ///< A factor representing the metabolic activity [0.0, 1.0+].
+    bool isDamaged;             ///< True if the lobule has sustained damage.
 };
 
 /**

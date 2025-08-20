@@ -1,10 +1,35 @@
 API Reference
 =============
 
-This page contains the auto-generated API reference for the MedicalLib C++ library.
+This section provides a detailed, auto-generated reference for every class, struct, and function in the MedicalLib library.
 
-.. doxygenfile:: MedicalLib/MedicalLib.h
-   :project: MedicalLib
+.. toctree::
+   :caption: Core
+   :maxdepth: 1
 
-.. doxygenfile:: MedicalLib/Patient.h
-   :project: MedicalLib
+   api/patient
+   api/organ
+
+.. toctree::
+   :caption: Organs
+   :maxdepth: 1
+
+   api/heart
+   api/lungs
+   api/brain
+   api/liver
+   api/kidneys
+   api/stomach
+   api/intestines
+   api/pancreas
+   api/spleen
+   api/gallbladder
+   api/bladder
+   api/esophagus
+   api/spinalcord
+
+.. toctree::
+   :caption: General
+   :maxdepth: 1
+
+   api/general

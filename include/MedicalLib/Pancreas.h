@@ -7,9 +7,9 @@
  * @brief Represents the mix of enzymes released by the pancreas for digestion.
  */
 struct DigestiveEnzymes {
-    double volume_mL = 0.0;
-    double amylase_U_per_L = 0.0;
-    double lipase_U_per_L = 0.0;
+    double volume_mL = 0.0;         ///< The volume of the secreted fluid in mL.
+    double amylase_U_per_L = 0.0;   ///< The concentration of amylase in Units/Liter.
+    double lipase_U_per_L = 0.0;    ///< The concentration of lipase in Units/Liter.
 };
 
 /**

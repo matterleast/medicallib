@@ -17,9 +17,9 @@ enum class SignalStatus {
  * @brief Represents a major bundle of nerve fibers in the spinal cord.
  */
 struct SpinalTract {
-    std::string name;
-    SignalStatus status;
-    double conductionVelocity_m_per_s;
+    std::string name;                       ///< The name of the tract (e.g., "Corticospinal").
+    SignalStatus status;                    ///< The functional status of the neural pathway.
+    double conductionVelocity_m_per_s;      ///< The speed of signal travel in meters/sec.
 };
 
 /**

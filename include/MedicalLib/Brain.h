@@ -10,9 +10,9 @@
  * @brief Represents a specific region of the brain.
  */
 struct BrainRegion {
-    std::string name;
-    double activityLevel; // 0.0 to 1.0
-    double bloodFlow_ml_100g_min;
+    std::string name;                   ///< The name of the brain region.
+    double activityLevel;               ///< Metabolic activity level, normalized [0.0, 1.0].
+    double bloodFlow_ml_100g_min;       ///< Blood flow in mL per 100g of tissue per minute.
 };
 
 /**

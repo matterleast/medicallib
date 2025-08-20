@@ -17,8 +17,8 @@ enum class PeristalsisState {
  * @brief Represents a small mass of chewed food.
  */
 struct Bolus {
-    double volume_mL;
-    double position_cm; // Position from the top of the esophagus
+    double volume_mL;     ///< The volume of the bolus in mL.
+    double position_cm;   ///< Position from the top of the esophagus in cm.
 };
 
 /**
