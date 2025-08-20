@@ -1,16 +1,17 @@
 #pragma once
 
+#include <vector>
+#include <memory>
+
+// Forward-declare the Organ class to avoid circular dependencies
+class Organ;
+
 /**
  * @brief Holds all the vital signs and other medical information for a patient.
  */
 struct Patient {
     int patientId;
-    double bloodPressureSystolic;
-    double bloodPressureDiastolic;
-    double heartRate;
-    double respirationRate;
-    double bodyTemperature;
-    double oxygenSaturation;
+    std::vector<std::unique_ptr<Organ>> organs;
 };
 
 // Define MEDICAL_LIB_EXPORT for exporting symbols from the DLL

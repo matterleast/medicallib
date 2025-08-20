@@ -5,7 +5,24 @@ cmake_minimum_required(VERSION 3.10)
 project(MedicalLib)
 
 # Add the library
-add_library(MedicalLib SHARED src/MedicalLib.cpp src/Patient.cpp)
+add_library(MedicalLib SHARED
+    src/MedicalLib.cpp
+    src/Patient.cpp
+    src/Organ.cpp
+    src/Heart.cpp
+    src/Lungs.cpp
+    src/Brain.cpp
+    src/Liver.cpp
+    src/Kidneys.cpp
+    src/Bladder.cpp
+    src/Stomach.cpp
+    src/Intestines.cpp
+    src/Gallbladder.cpp
+    src/Pancreas.cpp
+    src/Esophagus.cpp
+    src/Spleen.cpp
+    src/SpinalCord.cpp
+)
 
 # Define MEDICAL_LIB_EXPORT, so that __declspec(dllexport) is used
 target_compile_definitions(MedicalLib PRIVATE MEDICAL_LIB_EXPORT)
