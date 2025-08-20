@@ -1,4 +1,5 @@
 #include "MedicalLib/Bladder.h"
+#include "MedicalLib/Patient.h"
 #include <random>
 #include <algorithm>
 #include <sstream>
@@ -11,14 +12,7 @@ Bladder::Bladder(int id)
       pressure_cmH2O(5.0),
       internalSphincterClosed(true) {}
 
-void Bladder::update(double deltaTime_s) {
-    // In a connected model, this would be called by the Kidneys.
-    // For now, simulate a constant fill rate from the kidneys.
-    const double urineInflow_ml_per_s = 0.02;
-    if (currentState != MicturitionState::VOIDING) {
-        addUrine(urineInflow_ml_per_s * deltaTime_s);
-    }
-
+void Bladder::update(Patient& patient, double deltaTime_s) {
     // Simple pressure model: pressure increases with volume
     pressure_cmH2O = (currentVolume_mL / capacity_mL) * 60.0;
 

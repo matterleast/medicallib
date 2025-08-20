@@ -1,4 +1,6 @@
 #include "MedicalLib/Gallbladder.h"
+#include "MedicalLib/Patient.h"
+#include "MedicalLib/Liver.h"
 #include <random>
 #include <algorithm>
 #include <sstream>
@@ -10,12 +12,15 @@ Gallbladder::Gallbladder(int id)
       storedBile_mL(30.0),
       bileConcentrationFactor(5.0) {}
 
-void Gallbladder::update(double deltaTime_s) {
-    // A real model would be driven by liver output and CCK hormone for contraction.
-    // For now, simulate slow storage and concentration, with a periodic contraction.
+void Gallbladder::update(Patient& patient, double deltaTime_s) {
+    // Get bile from the liver
+    if (const Liver* liver = getOrgan<Liver>(patient)) {
+        double bileProduced_mL = liver->getBileProductionRate() * deltaTime_s;
+        storeBile(bileProduced_mL);
+    }
 
-    // Simulate bile coming from the liver
-    storeBile(0.005 * deltaTime_s); // Slow constant trickle
+    // A real model would also be driven by CCK hormone for contraction.
+    // For now, simulate slow storage and concentration, with a periodic contraction.
 
     switch (currentState) {
         case GallbladderState::STORING:

@@ -8,10 +8,21 @@
 class Organ;
 
 /**
+ * @brief Represents the composition of the patient's blood.
+ */
+struct Blood {
+    double oxygenSaturation = 98.0;      // Normal SpO2
+    double co2PartialPressure_mmHg = 40.0; // Normal PaCO2
+    double glucose_mg_per_dL = 100.0;    // Normal fasting glucose
+    double toxins_au = 0.0;              // Arbitrary units, 0 is clean
+};
+
+/**
  * @brief Holds all the vital signs and other medical information for a patient.
  */
 struct Patient {
     int patientId;
+    Blood blood;
     std::vector<std::unique_ptr<Organ>> organs;
 };
 
@@ -65,6 +76,22 @@ MEDICAL_LIB_API std::string getPatientSummary(const Patient& patient);
 
 /**
  * @brief Gets a pointer to a specific organ by its type.
+ * @tparam T The type of the organ to get.
+ * @param patient The patient to get the organ from.
+ * @return A pointer to the organ if found, otherwise nullptr.
+ */
+template<typename T>
+T* getOrgan(Patient& patient) {
+    for (auto& organ : patient.organs) {
+        if (T* specificOrgan = dynamic_cast<T*>(organ.get())) {
+            return specificOrgan;
+        }
+    }
+    return nullptr;
+}
+
+/**
+ * @brief Gets a const pointer to a specific organ by its type.
  * @tparam T The type of the organ to get.
  * @param patient The patient to get the organ from.
  * @return A const pointer to the organ if found, otherwise nullptr.

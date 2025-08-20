@@ -1,4 +1,5 @@
 #include "MedicalLib/Intestines.h"
+#include "MedicalLib/Patient.h"
 #include <random>
 #include <algorithm>
 #include <sstream>
@@ -23,19 +24,15 @@ Intestines::Intestines(int id)
     colon = {"Colon", 1.5, 0.5, 0.1, 1.0}; // High water absorption
 }
 
-void Intestines::update(double deltaTime_s) {
-    // For demonstration, simulate chyme arriving from the stomach
-    static double timeSinceChyme = 0.0;
-    timeSinceChyme += deltaTime_s;
-    if (timeSinceChyme > 25.0) {
-        receiveChyme(10.0); // Receive 10mL of chyme
-        timeSinceChyme = 0.0;
-    }
-
+void Intestines::update(Patient& patient, double deltaTime_s) {
     if (chymeVolume_mL > 0) {
         // Simplified absorption model: total absorption is an average of all segments
         double totalNutrientAbsorption = (duodenum.nutrientAbsorptionRate + jejunum.nutrientAbsorptionRate + ileum.nutrientAbsorptionRate + colon.nutrientAbsorptionRate) / 4.0;
         double totalWaterAbsorption = (duodenum.waterAbsorptionRate + jejunum.waterAbsorptionRate + ileum.waterAbsorptionRate + colon.waterAbsorptionRate) / 4.0;
+
+        // Absorb glucose into the blood
+        double glucoseAbsorption = totalNutrientAbsorption * chymeVolume_mL * 0.001 * deltaTime_s;
+        patient.blood.glucose_mg_per_dL += glucoseAbsorption;
 
         // Reduce chyme volume based on absorption
         double absorbedVolume = (totalNutrientAbsorption * 0.01 + totalWaterAbsorption * 0.1) * deltaTime_s;

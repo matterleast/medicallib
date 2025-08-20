@@ -1,4 +1,6 @@
 #include "MedicalLib/Brain.h"
+#include "MedicalLib/Patient.h" // For Blood struct
+#include "MedicalLib/Heart.h"   // For Heart data
 #include <random>
 #include <algorithm>
 #include <sstream>
@@ -29,13 +31,17 @@ Brain::Brain(int id)
     cerebellum = {"Cerebellum", 0.6, 60.0};
 }
 
-void Brain::update(double deltaTime_s) {
+void Brain::update(Patient& patient, double deltaTime_s) {
     totalTime_s += deltaTime_s;
 
-    // In a real scenario, MAP would be provided by the circulatory system (Heart)
-    // For now, we'll just keep it stable with minor fluctuations.
-    meanArterialPressure_mmHg += getFluctuation(0.1);
-    meanArterialPressure_mmHg = std::clamp(meanArterialPressure_mmHg, 85.0, 95.0);
+    // Get Mean Arterial Pressure from the Heart
+    if (const Heart* heart = getOrgan<Heart>(patient)) {
+        meanArterialPressure_mmHg = heart->getAorticPressure();
+    } else {
+        // If no heart, use a default stable value
+        meanArterialPressure_mmHg += getFluctuation(0.1);
+        meanArterialPressure_mmHg = std::clamp(meanArterialPressure_mmHg, 85.0, 95.0);
+    }
 
     updateActivity(deltaTime_s);
     updatePressures(meanArterialPressure_mmHg);
@@ -45,6 +51,37 @@ void Brain::update(double deltaTime_s) {
     if (eegData.size() > eegHistorySize) {
         eegData.pop_back();
     }
+
+    // --- Blood Interaction ---
+    Blood& blood = patient.blood;
+    // Brain consumes O2 and produces CO2. Rate depends on activity.
+    double totalActivity = (frontalLobe.activityLevel + temporalLobe.activityLevel +
+                           parietalLobe.activityLevel + occipitalLobe.activityLevel +
+                           cerebellum.activityLevel) / 5.0;
+
+    // O2 consumption
+    double o2_consumption = 0.1 * totalActivity * deltaTime_s; // % per second
+    blood.oxygenSaturation -= o2_consumption;
+
+    // CO2 production
+    double co2_production = 0.08 * totalActivity * deltaTime_s; // mmHg per second
+    blood.co2PartialPressure_mmHg += co2_production;
+
+    // Update GCS based on blood gas levels
+    if (blood.oxygenSaturation < 85.0) {
+        gcsScore = 10;
+    } else if (blood.oxygenSaturation < 75.0) {
+        gcsScore = 6;
+    } else {
+        gcsScore = 15;
+    }
+
+    if (blood.co2PartialPressure_mmHg > 60.0) {
+        gcsScore = std::min(gcsScore, 12); // CO2 narcosis
+    }
+    if (blood.co2PartialPressure_mmHg > 80.0) {
+        gcsScore = std::min(gcsScore, 8);
+    }
 }
 
 void Brain::updateActivity(double deltaTime_s) {
@@ -52,9 +89,12 @@ void Brain::updateActivity(double deltaTime_s) {
     frontalLobe.activityLevel += getFluctuation(0.005);
     frontalLobe.activityLevel = std::clamp(frontalLobe.activityLevel, 0.7, 0.9);
 
-    // GCS is a clinical score, doesn't typically change second-to-second.
-    // This is a placeholder for future, more complex pathology simulation.
-    gcsScore = 15;
+    // GCS is a clinical score, doesn't typically change second-to-second,
+    // but it will be affected by severe hypoxia or hypercapnia.
+    // This is a simplified model.
+    if (gcsScore > 8) { // Only check if not already severely impaired
+        if (cerebralPerfusionPressure_mmHg < 50) gcsScore = 8; // Reduced perfusion
+    }
 }
 
 void Brain::updatePressures(double meanArterialPressure) {

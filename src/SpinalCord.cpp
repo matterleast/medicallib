@@ -1,4 +1,5 @@
 #include "MedicalLib/SpinalCord.h"
+#include "MedicalLib/Patient.h"
 #include <random>
 #include <algorithm>
 #include <sstream>
@@ -21,7 +22,7 @@ SpinalCord::SpinalCord(int id)
     ascendingSensoryTract = {"Ascending Sensory Tract", SignalStatus::NORMAL, 65.0};
 }
 
-void SpinalCord::update(double deltaTime_s) {
+void SpinalCord::update(Patient& patient, double deltaTime_s) {
     // In a healthy state, status doesn't change.
     // Pathology models would alter these values.
     // For now, we just simulate minor fluctuations in a healthy velocity.

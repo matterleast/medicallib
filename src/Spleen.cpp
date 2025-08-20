@@ -1,4 +1,5 @@
 #include "MedicalLib/Spleen.h"
+#include "MedicalLib/Patient.h"
 #include <random>
 #include <algorithm>
 #include <sstream>
@@ -18,7 +19,7 @@ Spleen::Spleen(int id) : Organ(id, "Spleen") {
     whitePulp = {1500.0, 500.0};
 }
 
-void Spleen::update(double deltaTime_s) {
+void Spleen::update(Patient& patient, double deltaTime_s) {
     // In a real model, these values would change in response to infection or disease.
     // For now, we just simulate minor fluctuations around a healthy baseline.
 

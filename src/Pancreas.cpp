@@ -1,4 +1,5 @@
 #include "MedicalLib/Pancreas.h"
+#include "MedicalLib/Patient.h"
 #include <random>
 #include <algorithm>
 #include <sstream>
@@ -19,22 +20,34 @@ Pancreas::Pancreas(int id)
       amylaseSecretion_U_per_L(80.0),
       lipaseSecretion_U_per_L(40.0) {}
 
-void Pancreas::update(double deltaTime_s) {
-    // In a real model, hormone secretion would be driven by blood glucose.
-    // Enzyme secretion would be driven by food in the duodenum.
+void Pancreas::update(Patient& patient, double deltaTime_s) {
+    // Hormone secretion is driven by blood glucose.
+    const double glucose = patient.blood.glucose_mg_per_dL;
+    const double highGlucoseThreshold = 120.0;
+    const double lowGlucoseThreshold = 80.0;
+
+    // Insulin response
+    if (glucose > highGlucoseThreshold) {
+        insulinSecretion_units_per_hr += (glucose - highGlucoseThreshold) * 0.1 * deltaTime_s;
+    } else {
+        insulinSecretion_units_per_hr -= 0.5 * deltaTime_s;
+    }
+
+    // Glucagon response
+    if (glucose < lowGlucoseThreshold) {
+        glucagonSecretion_ng_per_hr += (lowGlucoseThreshold - glucose) * 0.2 * deltaTime_s;
+    } else {
+        glucagonSecretion_ng_per_hr -= 1.0 * deltaTime_s;
+    }
+
+    // Enzyme secretion would be driven by food in the duodenum (not yet modeled).
     // For now, we just simulate minor fluctuations around a baseline.
-
-    // Endocrine fluctuations
-    insulinSecretion_units_per_hr += getFluctuation(0.05);
-    glucagonSecretion_ng_per_hr += getFluctuation(0.5);
-
-    // Exocrine fluctuations
     amylaseSecretion_U_per_L += getFluctuation(0.2);
     lipaseSecretion_U_per_L += getFluctuation(0.2);
 
-    // Clamp to healthy ranges
-    insulinSecretion_units_per_hr = std::clamp(insulinSecretion_units_per_hr, 0.5, 2.0);
-    glucagonSecretion_ng_per_hr = std::clamp(glucagonSecretion_ng_per_hr, 40.0, 60.0);
+    // Clamp to healthy/possible ranges
+    insulinSecretion_units_per_hr = std::clamp(insulinSecretion_units_per_hr, 0.5, 10.0);
+    glucagonSecretion_ng_per_hr = std::clamp(glucagonSecretion_ng_per_hr, 20.0, 100.0);
     amylaseSecretion_U_per_L = std::clamp(amylaseSecretion_U_per_L, 60.0, 100.0);
     lipaseSecretion_U_per_L = std::clamp(lipaseSecretion_U_per_L, 20.0, 60.0);
 }

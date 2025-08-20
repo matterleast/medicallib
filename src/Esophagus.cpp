@@ -1,4 +1,5 @@
 #include "MedicalLib/Esophagus.h"
+#include "MedicalLib/Patient.h"
 #include <random>
 #include <algorithm>
 #include <sstream>
@@ -9,7 +10,7 @@ Esophagus::Esophagus(int id)
       currentState(PeristalsisState::IDLE),
       lowerEsophagealSphincterTone(20.0) {}
 
-void Esophagus::update(double deltaTime_s) {
+void Esophagus::update(Patient& patient, double deltaTime_s) {
     // Simulate a swallow every 15 seconds for demonstration
     static double timeSinceLastSwallow = 0.0;
     timeSinceLastSwallow += deltaTime_s;

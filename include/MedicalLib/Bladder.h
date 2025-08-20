@@ -25,9 +25,10 @@ public:
 
     /**
      * @brief Updates the bladder's state over a time interval.
+     * @param patient A reference to the patient object.
      * @param deltaTime_s The time elapsed in seconds.
      */
-    void update(double deltaTime_s) override;
+    void update(Patient& patient, double deltaTime_s) override;
 
     /**
      * @brief Gets a string summary of the bladder's state.

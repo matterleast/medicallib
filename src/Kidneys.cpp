@@ -1,4 +1,7 @@
 #include "MedicalLib/Kidneys.h"
+#include "MedicalLib/Patient.h"
+#include "MedicalLib/Heart.h"
+#include "MedicalLib/Bladder.h"
 #include <random>
 #include <algorithm>
 #include <sstream>
@@ -28,7 +31,7 @@ Kidneys::Kidneys(int id)
     }
 }
 
-void Kidneys::update(double deltaTime_s) {
+void Kidneys::update(Patient& patient, double deltaTime_s) {
     // Recalculate total capacity based on nephron health
     totalFiltrationCapacity = 0.0;
     for (const auto& nephron : nephrons) {
@@ -38,13 +41,24 @@ void Kidneys::update(double deltaTime_s) {
     }
     totalFiltrationCapacity /= nephrons.size();
 
-    // GFR is dependent on overall health
-    const double baseline_gfr = 125.0 * totalFiltrationCapacity;
+    // GFR is dependent on blood pressure from the heart
+    double perfusionPressure = 90.0; // Assume normal MAP if heart is not present
+    if (const Heart* heart = getOrgan<Heart>(patient)) {
+        perfusionPressure = heart->getAorticPressure();
+    }
+    double pressureModifier = std::clamp(perfusionPressure / 90.0, 0.5, 1.2);
+
+    const double baseline_gfr = 125.0 * totalFiltrationCapacity * pressureModifier;
     gfr_mL_per_min += 0.1 * (baseline_gfr - gfr_mL_per_min) * deltaTime_s + getFluctuation(0.5);
 
-    // Urine output is related to GFR but also hydration status (not modeled yet)
+    // Urine output is related to GFR
     urineOutput_mL_per_s = gfr_mL_per_min / 60.0 * 0.01; // Simplified relationship
     urineOutput_mL_per_s += getFluctuation(0.001);
+
+    // Pass urine to the bladder
+    if (Bladder* bladder = getOrgan<Bladder>(patient)) {
+        bladder->addUrine(urineOutput_mL_per_s * deltaTime_s);
+    }
 
     // Simulate electrolyte balance
     bloodSodium_mEq_per_L += getFluctuation(0.05);
