@@ -57,6 +57,7 @@ private:
     // --- Private Helper Methods ---
     void updateActivity(double deltaTime_s);
     void updatePressures(double meanArterialPressure);
+    void updateAutonomicControl(Patient& patient, double deltaTime_s);
     double generateEegValue();
 
     // --- Physiological Parameters ---
@@ -74,6 +75,10 @@ private:
     BrainRegion parietalLobe;
     BrainRegion occipitalLobe;
     BrainRegion cerebellum;
+
+    // --- Autonomic Control Targets ---
+    double targetRespirationRate_bpm;
+    double targetHeartRate_bpm;
 
     // --- Waveform Data ---
     std::deque<double> eegData;

@@ -4,6 +4,9 @@
 #include <string>
 #include <vector>
 
+// Forward-declare for receiveEnzymes method
+struct DigestiveEnzymes;
+
 /**
  * @brief Represents a segment of the intestines.
  */
@@ -45,6 +48,18 @@ public:
      */
     void receiveChyme(double volume_mL);
 
+    /**
+     * @brief Adds bile from the gallbladder.
+     * @param volume_mL The volume of bile.
+     */
+    void receiveBile(double volume_mL);
+
+    /**
+     * @brief Adds digestive enzymes from the pancreas.
+     * @param enzymes A struct containing the enzyme information.
+     */
+    void receiveEnzymes(const DigestiveEnzymes& enzymes);
+
     // --- Getters for Intestinal State ---
 
     /** @brief Gets the total volume of chyme currently in the intestines. */
@@ -59,4 +74,8 @@ private:
 
     // --- Simulation State ---
     double chymeVolume_mL; // Total volume in the whole system for now
+    double bileVolume_mL;
+    double enzymeVolume_mL;
+    double amylase_U_per_L;
+    double lipase_U_per_L;
 };

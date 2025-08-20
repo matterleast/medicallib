@@ -18,6 +18,7 @@ static double getFluctuation(double stddev) {
 
 Kidneys::Kidneys(int id)
     : Organ(id, "Kidneys"),
+      reninSecretionRate(1.0), // Baseline ng/mL/hr
       gfr_mL_per_min(125.0),
       urineOutput_mL_per_s(0.02),
       bloodSodium_mEq_per_L(140.0),
@@ -64,11 +65,24 @@ void Kidneys::update(Patient& patient, double deltaTime_s) {
     bloodSodium_mEq_per_L += getFluctuation(0.05);
     bloodPotassium_mEq_per_L += getFluctuation(0.01);
 
+    // --- RAAS Regulation ---
+    // Renin is released in response to low blood pressure.
+    const auto& bp = patient.blood.bloodPressure;
+    double meanArterialPressure = bp.diastolic_mmHg + (bp.systolic_mmHg - bp.diastolic_mmHg) / 3.0;
+
+    if (meanArterialPressure < 85.0) { // Low pressure threshold
+        reninSecretionRate += (85.0 - meanArterialPressure) * 0.1 * deltaTime_s;
+    } else {
+        // If pressure is normal, renin decays back to baseline
+        reninSecretionRate -= (reninSecretionRate - 1.0) * 0.05 * deltaTime_s;
+    }
+
     // Clamp to healthy ranges
     gfr_mL_per_min = std::clamp(gfr_mL_per_min, 90.0, 150.0);
     urineOutput_mL_per_s = std::clamp(urineOutput_mL_per_s, 0.01, 0.03);
     bloodSodium_mEq_per_L = std::clamp(bloodSodium_mEq_per_L, 135.0, 145.0);
     bloodPotassium_mEq_per_L = std::clamp(bloodPotassium_mEq_per_L, 3.5, 5.0);
+    reninSecretionRate = std::clamp(reninSecretionRate, 0.5, 50.0);
 }
 
 std::string Kidneys::getSummary() const {
@@ -78,6 +92,7 @@ std::string Kidneys::getSummary() const {
     ss << "--- Kidneys Summary ---\n"
        << "Glomerular Filtration Rate (GFR): " << getGfr() << " mL/min\n"
        << "Urine Output: " << getUrineOutputRate() * 3600 << " mL/hr\n"
+       << "Renin Secretion: " << getReninSecretionRate() << " ng/mL/hr\n"
        << "Blood Sodium: " << getBloodSodium() << " mEq/L\n"
        << "Blood Potassium: " << getBloodPotassium() << " mEq/L\n";
     return ss.str();
@@ -88,3 +103,4 @@ double Kidneys::getGfr() const { return gfr_mL_per_min; }
 double Kidneys::getUrineOutputRate() const { return urineOutput_mL_per_s; }
 double Kidneys::getBloodSodium() const { return bloodSodium_mEq_per_L; }
 double Kidneys::getBloodPotassium() const { return bloodPotassium_mEq_per_L; }
+double Kidneys::getReninSecretionRate() const { return reninSecretionRate; }

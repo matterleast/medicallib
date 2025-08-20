@@ -62,17 +62,9 @@ void Heart::update(Patient& patient, double deltaTime_s) {
     // --- Electrical Simulation Update ---
     totalTime_s += deltaTime_s;
 
-    // Compensatory response to hypoxia
-    double o2_saturation = patient.blood.oxygenSaturation;
-    double targetHeartRate = 75.0;
-    if (o2_saturation < 90.0) {
-        targetHeartRate = 75.0 + (90.0 - o2_saturation) * 2.0; // Increase HR as SpO2 drops
-    }
-
-    // Move current heart rate towards the target
-    heartRate += (targetHeartRate - heartRate) * 0.1 * deltaTime_s;
-    heartRate += getFluctuation(0.01); // Slow variation in underlying rate
-    heartRate = std::max(60.0, std::min(heartRate, 140.0));
+    // The underlying heartRate is now set externally by the Brain.
+    // We just add a little natural variation.
+    heartRate += getFluctuation(0.01);
     double cycleDuration_s = 60.0 / heartRate;
 
     double oldCyclePosition = cardiacCyclePosition_s;
@@ -157,6 +149,14 @@ void Heart::update(Patient& patient, double deltaTime_s) {
     // Clamp volumes to realistic values
     leftVentricle.volume_mL = std::max(40.0, std::min(leftVentricle.volume_mL, 130.0));
     rightVentricle.volume_mL = std::max(40.0, std::min(rightVentricle.volume_mL, 130.0));
+
+    // --- Update Blood Pressure ---
+    // Simplified model: BP is influenced by heart rate and RAAS.
+    double angiotensinEffect = patient.blood.angiotensin_au * 2.0; // Angiotensin is a potent vasoconstrictor
+    double systolic = 110.0 + (heartRate - 75.0) * 0.5 + angiotensinEffect;
+    double diastolic = 75.0 + (heartRate - 75.0) * 0.25 + angiotensinEffect;
+    patient.blood.bloodPressure.systolic_mmHg = std::clamp(systolic, 80.0, 180.0);
+    patient.blood.bloodPressure.diastolic_mmHg = std::clamp(diastolic, 50.0, 110.0);
 }
 
 double Heart::simulateEkgWaveform(double timeInCycle) {
@@ -202,4 +202,10 @@ double Heart::getAorticPressure() const {
     }
     // Simplified diastolic pressure decay
     return 80.0 + 40.0 * exp(-cardiacCyclePosition_s);
+}
+
+void Heart::setHeartRate(double newRate_bpm) {
+    // Set the underlying target heart rate. The simulation will then use this
+    // as the basis for its cycle timing.
+    heartRate = newRate_bpm;
 }

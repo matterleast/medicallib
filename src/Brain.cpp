@@ -1,6 +1,7 @@
 #include "MedicalLib/Brain.h"
 #include "MedicalLib/Patient.h" // For Blood struct
 #include "MedicalLib/Heart.h"   // For Heart data
+#include "MedicalLib/Lungs.h"   // For setting respiration
 #include <random>
 #include <algorithm>
 #include <sstream>
@@ -21,6 +22,8 @@ Brain::Brain(int id)
       cerebralPerfusionPressure_mmHg(80.0),
       meanArterialPressure_mmHg(90.0), // Placeholder value
       totalTime_s(0.0),
+      targetRespirationRate_bpm(16.0), // Normal baseline
+      targetHeartRate_bpm(75.0),       // Normal baseline
       eegHistorySize(200) {
 
     // Initialize Brain Regions
@@ -45,6 +48,7 @@ void Brain::update(Patient& patient, double deltaTime_s) {
 
     updateActivity(deltaTime_s);
     updatePressures(meanArterialPressure_mmHg);
+    updateAutonomicControl(patient, deltaTime_s);
 
     // Update EEG data
     eegData.push_front(generateEegValue());
@@ -105,6 +109,54 @@ void Brain::updatePressures(double meanArterialPressure) {
 
     cerebralPerfusionPressure_mmHg = meanArterialPressure - intracranialPressure_mmHg;
     cerebralPerfusionPressure_mmHg = std::max(0.0, cerebralPerfusionPressure_mmHg);
+}
+
+void Brain::updateAutonomicControl(Patient& patient, double deltaTime_s) {
+    const double& co2 = patient.blood.co2PartialPressure_mmHg;
+    const double& o2 = patient.blood.oxygenSaturation;
+
+    // Chemoreceptor reflex: Adjust respiration based on blood gases
+    double co2_error = co2 - 40.0; // Normal PaCO2 is 40 mmHg
+    double o2_error = 98.0 - o2;   // Normal SpO2 is ~98%
+
+    // Increase rate for high CO2 or low O2
+    double co2_drive = std::max(0.0, co2_error) * 0.5; // Strong response to high CO2
+    double o2_drive = std::max(0.0, o2_error) * 0.8;   // Stronger response to hypoxia
+
+    double targetRate = 16.0 + co2_drive + o2_drive;
+
+    // Smoothly adjust the current rate towards the target rate
+    double adjustmentSpeed = 0.5; // How quickly the rate changes
+    targetRespirationRate_bpm += (targetRate - targetRespirationRate_bpm) * adjustmentSpeed * deltaTime_s;
+
+    // Clamp to a physiological range
+    targetRespirationRate_bpm = std::clamp(targetRespirationRate_bpm, 8.0, 35.0);
+
+    if (Lungs* lungs = getOrgan<Lungs>(patient)) {
+        lungs->setRespirationRate(targetRespirationRate_bpm);
+    }
+
+    // Baroreceptor reflex: Adjust heart rate based on blood pressure
+    const auto& bp = patient.blood.bloodPressure;
+    double meanArterialPressure = bp.diastolic_mmHg + (bp.systolic_mmHg - bp.diastolic_mmHg) / 3.0;
+
+    double bp_error = 90.0 - meanArterialPressure; // Target MAP is 90 mmHg
+
+    // Change HR to correct the error.
+    double hr_adjustment = bp_error * 0.4; // Proportional response
+
+    double targetRate_hr = 75.0 + hr_adjustment;
+
+    // Smoothly adjust the current rate towards the target rate
+    double hrAdjustmentSpeed = 0.4;
+    targetHeartRate_bpm += (targetRate_hr - targetHeartRate_bpm) * hrAdjustmentSpeed * deltaTime_s;
+
+    // Clamp to a physiological range
+    targetHeartRate_bpm = std::clamp(targetHeartRate_bpm, 50.0, 160.0);
+
+    if (Heart* heart = getOrgan<Heart>(patient)) {
+        heart->setHeartRate(targetHeartRate_bpm);
+    }
 }
 
 double Brain::generateEegValue() {

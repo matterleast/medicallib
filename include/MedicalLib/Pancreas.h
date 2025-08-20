@@ -4,6 +4,15 @@
 #include <string>
 
 /**
+ * @brief Represents the mix of enzymes released by the pancreas for digestion.
+ */
+struct DigestiveEnzymes {
+    double volume_mL = 0.0;
+    double amylase_U_per_L = 0.0;
+    double lipase_U_per_L = 0.0;
+};
+
+/**
  * @brief Represents the Pancreas, with both endocrine and exocrine functions.
  */
 class MEDICAL_LIB_API Pancreas : public Organ {
@@ -43,6 +52,15 @@ public:
     /** @brief Gets the current lipase secretion rate in U/L. */
     double getLipaseSecretion() const;
 
+    // --- Exocrine Functions (Enzymes) ---
+
+    /**
+     * @brief Releases digestive enzymes when stimulated.
+     * @param deltaTime_s The time step for this update.
+     * @return A struct containing the released enzymes.
+     */
+    DigestiveEnzymes releaseEnzymes(double deltaTime_s);
+
 private:
     // --- Endocrine Parameters ---
     double insulinSecretion_units_per_hr;
@@ -51,4 +69,5 @@ private:
     // --- Exocrine Parameters ---
     double amylaseSecretion_U_per_L;
     double lipaseSecretion_U_per_L;
+    double enzymeReleaseRate_ml_per_s;
 };
