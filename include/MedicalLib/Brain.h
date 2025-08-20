@@ -16,7 +16,105 @@ struct BrainRegion {
 };
 
 /**
- * @brief Represents the Brain organ with a more detailed physiological model.
+ * @brief Represents the Brain organ, simulating neurological vitals and activity.
+ *
+ * @section bio_sec Biological Overview
+ * The brain is the command center of the nervous system, controlling thought, memory, emotion,
+ * touch, motor skills, vision, breathing, temperature, hunger, and every process that regulates
+ * our body. It is a complex organ composed of several distinct regions, each with specialized
+- * functions.
++ * functions. The major parts include:
+ * - **Frontal Lobe**: Associated with reasoning, planning, parts of speech, movement, emotions, and problem-solving.
+ * - **Parietal Lobe**: Manages perception of stimuli related to touch, pressure, temperature, and pain.
+ * - **Temporal Lobe**: Involved in perception and recognition of auditory stimuli, memory, and speech.
+ * - **Occipital Lobe**: Primarily responsible for vision.
+ * - **Cerebellum**: Crucial for coordinating voluntary movements, posture, balance, and speech.
+ *
+ * Maintaining adequate blood flow is critical for brain health. Two key metrics are:
+ * - **Intracranial Pressure (ICP)**: The pressure inside the skull.
+ * - **Cerebral Perfusion Pressure (CPP)**: The net pressure gradient causing blood flow to the brain.
+ *
+ * @section model_sec Code Simulation
+ * This `Brain` class models the brain's high-level physiological state and its influence on
+ * the body's autonomic systems.
+ *
+ * @subsection neuro_vitals_sec Neurological Vitals
+ * The simulation tracks several key neurological vitals:
+ * - **Glasgow Coma Scale (GCS)**: A simplified score representing the level of consciousness,
+ *   accessible via `getGCS()`.
+ * - **Intracranial Pressure (ICP)**: A simulated pressure within the skull, retrieved with
+ *   `getIntracranialPressure()`.
+ * - **Cerebral Perfusion Pressure (CPP)**: Calculated based on ICP and Mean Arterial Pressure,
+ *   available through `getCerebralPerfusionPressure()`.
+ * - **EEG Waveform**: The class generates a simplified electroencephalogram (EEG) waveform,
+ *   which can be accessed with `getEegWaveform()`.
+ *
+ * @subsection region_model_sec Regional Activity Model
+ * The major lobes and the cerebellum are modeled as `BrainRegion` structs, each with its own
+ * metabolic activity level and blood flow. The `update()` method adjusts these values over time.
+ *
+ * @subsection brain_diagram_sec Brain Regions Diagram
+ * This diagram shows the major brain regions simulated by this class.
+ *
+ * @dot
+ * digraph BrainRegions {
+ *     node [shape=box, style=rounded];
+ *
+ *     Brain [label="Brain", shape=ellipse];
+ *
+ *     subgraph cluster_Cerebrum {
+ *         label="Cerebrum (Lobes)";
+ *         style=filled;
+ *         color=lightblue;
+ *         Frontal [label="Frontal Lobe"];
+ *         Parietal [label="Parietal Lobe"];
+ *         Temporal [label="Temporal Lobe"];
+ *         Occipital [label="Occipital Lobe"];
+ *     }
+ *
+ *     Cerebellum [label="Cerebellum", style=filled, color=lightpink];
+ *
+ *     Brain -> Frontal;
+ *     Brain -> Parietal;
+ *     Brain -> Temporal;
+ *     Brain -> Occipital;
+ *     Brain -> Cerebellum;
+ * }
+ * @enddot
+ *
+ * @section usage_sec Example Usage
+ * The following C++ code shows how to create a `Brain` instance and monitor its state.
+ *
+ * @code{.cpp}
+ * #include <iostream>
+ * #include "MedicalLib/Brain.h"
+ * #include "MedicalLib/Patient.h"
+ *
+ * int main() {
+ *     // A patient object is needed for the update function
+ *     Patient patient;
+ *
+ *     // Create a Brain object
+ *     Brain brain(1);
+ *
+ *     // Simulate for 5 seconds
+ *     std::cout << "Simulating Brain for 5 seconds..." << std::endl;
+ *     for (int i = 0; i < 5; ++i) {
+ *         // In a real simulation, the patient's heart would update the MAP
+ *         patient.setVital("MeanArterialPressure", 85.0); // Example MAP
+ *         brain.update(patient, 1.0); // Update by 1.0 second
+ *         std::cout << "Time: " << i + 1 << "s, " << brain.getSummary() << std::endl;
+ *     }
+ *
+ *     // Retrieve specific final vitals
+ *     std::cout << "\n--- Simulation Results ---" << std::endl;
+ *     std::cout << "Final GCS: " << brain.getGCS() << std::endl;
+ *     std::cout << "Final ICP: " << brain.getIntracranialPressure() << " mmHg" << std::endl;
+ *     std::cout << "Final CPP: " << brain.getCerebralPerfusionPressure() << " mmHg" << std::endl;
+ *
+ *     return 0;
+ * }
+ * @endcode
  */
 class MEDICAL_LIB_API Brain : public Organ {
 public:

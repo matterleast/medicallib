@@ -16,6 +16,7 @@ release = '1.0'
 
 extensions = [
     'breathe',
+    'sphinx.ext.graphviz',
 ]
 
 templates_path = ['_templates']

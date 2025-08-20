@@ -40,6 +40,113 @@ struct Chamber {
 
 /**
  * @brief Represents the Heart organ, with detailed mechanical and electrical simulation.
+ *
+ * @section bio_sec Biological Overview
+ * The heart is a muscular organ responsible for pumping blood throughout the circulatory system.
+ * It is divided into four chambers: two upper atria and two lower ventricles. The right side
+ * of the heart handles deoxygenated blood, while the left side handles oxygenated blood.
+ *
+ * - **Deoxygenated blood** from the body enters the **Right Atrium**.
+ * - It is pumped to the **Right Ventricle** through the **Tricuspid Valve**.
+ * - The Right Ventricle pumps the blood to the lungs through the **Pulmonary Valve**.
+ * - **Oxygenated blood** from the lungs enters the **Left Atrium**.
+ * - It is pumped to the **Left Ventricle** through the **Mitral Valve**.
+ * - The Left Ventricle pumps the oxygenated blood to the rest of the body through the **Aortic Valve**.
+ *
+ * This entire sequence is known as the cardiac cycle, which involves two main phases:
+ * 1.  **Diastole**: The relaxation phase, where chambers fill with blood.
+ * 2.  **Systole**: The contraction phase, where chambers pump blood out.
+ *
+ * @section model_sec Code Simulation
+ * This `Heart` class provides a detailed simulation of both the mechanical and electrical functions
+ * of the human heart.
+ *
+ * @subsection mech_model_sec Mechanical Model
+ * The four chambers and four primary valves are modeled using the `Chamber` and `Valve` structs.
+ * The `update()` function drives the simulation forward in time, calculating changes in chamber
+ * volume and pressure based on the current phase of the cardiac cycle (systole or diastole).
+ * Key outputs of the mechanical simulation include:
+ * - **Ejection Fraction**: The percentage of blood pumped out of the left ventricle with each beat.
+ *   Calculated by `getEjectionFraction()`.
+ * - **Aortic Pressure**: Represents the systemic blood pressure. Retrieved with `getAorticPressure()`.
+ *
+ * @subsection elec_model_sec Electrical Model
+ * The class also simulates the heart's electrical activity, which is observable via an
+ * electrocardiogram (EKG). The `simulateEkgWaveform()` function generates a realistic EKG signal
+ * based on the cardiac cycle's timing. The number of EKG leads can be configured in the constructor.
+ * The generated data can be accessed using `getEkgData()`.
+ *
+ * @subsection a_graph_sec Blood Flow Diagram
+ * The following diagram illustrates the path of blood through the heart's chambers and valves.
+ *
+ * @dot
+ * digraph BloodFlow {
+ *     rankdir="TB";
+ *     node [shape=box, style=rounded];
+ *
+ *     subgraph cluster_Deoxygenated {
+ *         label="Deoxygenated Blood (Pulmonary Circuit)";
+ *         style=filled;
+ *         color=lightblue;
+ *         Body [label="Vena Cava\n(from Body)"];
+ *         RA [label="Right Atrium"];
+ *         RV [label="Right Ventricle"];
+ *         Lungs_In [label="Pulmonary Artery\n(to Lungs)"];
+ *         Body -> RA [label=" Enters"];
+ *         RA -> RV [label=" Tricuspid Valve"];
+ *         RV -> Lungs_In [label=" Pulmonary Valve"];
+ *     }
+ *
+ *     subgraph cluster_Oxygenated {
+ *         label="Oxygenated Blood (Systemic Circuit)";
+ *         style=filled;
+ *         color=lightpink;
+ *         Lungs_Out [label="Pulmonary Vein\n(from Lungs)"];
+ *         LA [label="Left Atrium"];
+ *         LV [label="Left Ventricle"];
+ *         Aorta [label="Aorta\n(to Body)"];
+ *         Lungs_Out -> LA [label=" Enters"];
+ *         LA -> LV [label=" Mitral Valve"];
+ *         LV -> Aorta [label=" Aortic Valve"];
+ *     }
+ * }
+ * @enddot
+ *
+ * @section usage_sec Example Usage
+ * Here is a simple example of how to create a `Heart` object, simulate it over time,
+ * and retrieve data.
+ *
+ * @code{.cpp}
+ * #include <iostream>
+ * #include "MedicalLib/Heart.h"
+ * #include "MedicalLib/Patient.h"
+ *
+ * int main() {
+ *     // A patient object is needed for the update function
+ *     Patient patient;
+ *
+ *     // Create a Heart with 12 EKG leads
+ *     Heart heart(1, 12);
+ *
+ *     // Set a baseline heart rate
+ *     heart.setHeartRate(75.0);
+ *
+ *     // Simulate the heart for 5 seconds
+ *     std::cout << "Simulating Heart for 5 seconds..." << std::endl;
+ *     for (int i = 0; i < 5; ++i) {
+ *         heart.update(patient, 1.0); // Update by 1.0 second
+ *         std::cout << "Time: " << i + 1 << "s, " << heart.getSummary() << std::endl;
+ *     }
+ *
+ *     // Retrieve specific metrics from the simulation
+ *     std::cout << "\n--- Simulation Results ---" << std::endl;
+ *     std::cout << "Final Measured Heart Rate: " << heart.getHeartRate() << " bpm" << std::endl;
+ *     std::cout << "Final Ejection Fraction: " << heart.getEjectionFraction() << "%" << std::endl;
+ *     std::cout << "Final Aortic Pressure: " << heart.getAorticPressure() << " mmHg" << std::endl;
+ *
+ *     return 0;
+ * }
+ * @endcode
  */
 class MEDICAL_LIB_API Heart : public Organ {
 public:

@@ -61,3 +61,6 @@
 # Doxygen
 /docs/xml/
 /docs/latex/
+
+# Custom build output
+/doc_build_test/
