@@ -2,6 +2,7 @@
 #include <random>
 #include <algorithm>
 #include <sstream>
+#include <numeric>
 
 // Helper function for random fluctuations
 static double getFluctuation(double stddev) {
@@ -11,32 +12,70 @@ static double getFluctuation(double stddev) {
     return d(gen);
 }
 
-// Healthy baseline rates converted to per-second
-// Bile: 400-800 ml/day -> ~0.0069 ml/s
-// Glucose: ~90 g/day -> ~0.001 g/s
-Liver::Liver(int id) : Organ(id, "Liver"), bileProductionRate(0.0069), glucoseProductionRate(0.001) {}
+Liver::Liver(int id)
+    : Organ(id, "Liver"),
+      bileProductionRate_ml_per_s(0.0069),
+      glucoseProductionRate_g_per_s(0.001),
+      alt_U_per_L(25.0),
+      ast_U_per_L(25.0),
+      bilirubin_mg_per_dL(0.8),
+      totalMetabolicCapacity(1.0) {
+
+    // Create a simplified representation of lobules
+    lobules.resize(100); // 100 representative units
+    for (int i = 0; i < lobules.size(); ++i) {
+        lobules[i] = {"Lobule " + std::to_string(i), 1.0, false};
+    }
+}
 
 void Liver::update(double deltaTime_s) {
-    const double baseline_bile_rate = 0.0069;
-    const double baseline_glucose_rate = 0.001;
-    const double theta = 0.02; // Slow reversion for metabolic rates
-    const double bile_stddev = 0.0001;
-    const double glucose_stddev = 0.00005;
+    // Recalculate total capacity based on lobule health (for future use)
+    totalMetabolicCapacity = 0.0;
+    for (const auto& lobule : lobules) {
+        if (!lobule.isDamaged) {
+            totalMetabolicCapacity += lobule.metabolicActivity;
+        }
+    }
+    totalMetabolicCapacity /= lobules.size();
 
-    bileProductionRate += theta * (baseline_bile_rate - bileProductionRate) * deltaTime_s + getFluctuation(bile_stddev * deltaTime_s);
-    glucoseProductionRate += theta * (baseline_glucose_rate - glucoseProductionRate) * deltaTime_s + getFluctuation(glucose_stddev * deltaTime_s);
+    // Baseline production rates are modulated by liver health
+    const double baseline_bile_rate = 0.0069 * totalMetabolicCapacity;
+    const double baseline_glucose_rate = 0.001 * totalMetabolicCapacity;
 
-    bileProductionRate = std::clamp(bileProductionRate, 0.005, 0.009);
-    glucoseProductionRate = std::clamp(glucoseProductionRate, 0.0008, 0.0012);
+    // Update production rates with minor fluctuations
+    bileProductionRate_ml_per_s += 0.02 * (baseline_bile_rate - bileProductionRate_ml_per_s) * deltaTime_s + getFluctuation(0.0001);
+    glucoseProductionRate_g_per_s += 0.02 * (baseline_glucose_rate - glucoseProductionRate_g_per_s) * deltaTime_s + getFluctuation(0.00005);
+
+    // Update enzyme and bilirubin levels
+    // In a healthy state, they hover around a normal baseline
+    alt_U_per_L += getFluctuation(0.1);
+    ast_U_per_L += getFluctuation(0.1);
+    bilirubin_mg_per_dL += getFluctuation(0.01);
+
+    // Clamp to normal healthy ranges
+    bileProductionRate_ml_per_s = std::clamp(bileProductionRate_ml_per_s, 0.005, 0.009);
+    glucoseProductionRate_g_per_s = std::clamp(glucoseProductionRate_g_per_s, 0.0008, 0.0012);
+    alt_U_per_L = std::clamp(alt_U_per_L, 10.0, 40.0);
+    ast_U_per_L = std::clamp(ast_U_per_L, 10.0, 40.0);
+    bilirubin_mg_per_dL = std::clamp(bilirubin_mg_per_dL, 0.3, 1.2);
 }
 
 std::string Liver::getSummary() const {
     std::stringstream ss;
-    ss << "Type: " << organType << " (ID: " << organId << ")\n"
-       << "  Bile Production Rate: " << bileProductionRate * 60 << " ml/min\n"
-       << "  Glucose Production Rate: " << glucoseProductionRate * 60 << " g/min";
+    ss.precision(3);
+    ss << std::fixed;
+    ss << "--- Liver Summary ---\n"
+       << "Bile Production: " << getBileProductionRate() * 60.0 << " mL/min\n"
+       << "Glucose Production: " << getGlucoseProductionRate() * 60.0 << " g/min\n"
+       << "ALT Level: " << getAltLevel() << " U/L\n"
+       << "AST Level: " << getAstLevel() << " U/L\n"
+       << "Bilirubin: " << getBilirubinLevel() << " mg/dL\n";
     return ss.str();
 }
 
-double Liver::getBileProductionRate() const { return bileProductionRate; }
-double Liver::getGlucoseProductionRate() const { return glucoseProductionRate; }
+// --- Getters Implementation ---
+double Liver::getBileProductionRate() const { return bileProductionRate_ml_per_s; }
+double Liver::getGlucoseProductionRate() const { return glucoseProductionRate_g_per_s; }
+double Liver::getAltLevel() const { return alt_U_per_L; }
+double Liver::getAstLevel() const { return ast_U_per_L; }
+double Liver::getBilirubinLevel() const { return bilirubin_mg_per_dL; }

@@ -2,6 +2,7 @@
 #include <random>
 #include <algorithm>
 #include <sstream>
+#include <iomanip>
 
 // Helper function for random fluctuations
 static double getFluctuation(double stddev) {
@@ -11,29 +12,49 @@ static double getFluctuation(double stddev) {
     return d(gen);
 }
 
-Pancreas::Pancreas(int id) : Organ(id, "Pancreas"), insulinProduction(1.0), glucagonProduction(50.0) {}
+Pancreas::Pancreas(int id)
+    : Organ(id, "Pancreas"),
+      insulinSecretion_units_per_hr(1.0),
+      glucagonSecretion_ng_per_hr(50.0),
+      amylaseSecretion_U_per_L(80.0),
+      lipaseSecretion_U_per_L(40.0) {}
 
 void Pancreas::update(double deltaTime_s) {
-    const double baseline_insulin = 1.0;
-    const double baseline_glucagon = 50.0;
-    const double theta = 0.05;
-    const double insulin_stddev = 0.01;
-    const double glucagon_stddev = 1.0;
+    // In a real model, hormone secretion would be driven by blood glucose.
+    // Enzyme secretion would be driven by food in the duodenum.
+    // For now, we just simulate minor fluctuations around a baseline.
 
-    insulinProduction += theta * (baseline_insulin - insulinProduction) * deltaTime_s + getFluctuation(insulin_stddev * deltaTime_s);
-    glucagonProduction += theta * (baseline_glucagon - glucagonProduction) * deltaTime_s + getFluctuation(glucagon_stddev * deltaTime_s);
+    // Endocrine fluctuations
+    insulinSecretion_units_per_hr += getFluctuation(0.05);
+    glucagonSecretion_ng_per_hr += getFluctuation(0.5);
 
-    insulinProduction = std::clamp(insulinProduction, 0.5, 2.0);
-    glucagonProduction = std::clamp(glucagonProduction, 40.0, 60.0);
+    // Exocrine fluctuations
+    amylaseSecretion_U_per_L += getFluctuation(0.2);
+    lipaseSecretion_U_per_L += getFluctuation(0.2);
+
+    // Clamp to healthy ranges
+    insulinSecretion_units_per_hr = std::clamp(insulinSecretion_units_per_hr, 0.5, 2.0);
+    glucagonSecretion_ng_per_hr = std::clamp(glucagonSecretion_ng_per_hr, 40.0, 60.0);
+    amylaseSecretion_U_per_L = std::clamp(amylaseSecretion_U_per_L, 60.0, 100.0);
+    lipaseSecretion_U_per_L = std::clamp(lipaseSecretion_U_per_L, 20.0, 60.0);
 }
 
 std::string Pancreas::getSummary() const {
     std::stringstream ss;
-    ss << "Type: " << organType << " (ID: " << organId << ")\n"
-       << "  Insulin Production: " << insulinProduction << " units/hr\n"
-       << "  Glucagon Production: " << glucagonProduction << " ng/hr";
+    ss.precision(1);
+    ss << std::fixed;
+    ss << "--- Pancreas Summary ---\n"
+       << "--- Endocrine Function ---\n"
+       << "Insulin Secretion: " << getInsulinSecretion() << " units/hr\n"
+       << "Glucagon Secretion: " << getGlucagonSecretion() << " ng/hr\n"
+       << "--- Exocrine Function ---\n"
+       << "Amylase Secretion: " << getAmylaseSecretion() << " U/L\n"
+       << "Lipase Secretion: " << getLipaseSecretion() << " U/L\n";
     return ss.str();
 }
 
-double Pancreas::getInsulinProduction() const { return insulinProduction; }
-double Pancreas::getGlucagonProduction() const { return glucagonProduction; }
+// --- Getters Implementation ---
+double Pancreas::getInsulinSecretion() const { return insulinSecretion_units_per_hr; }
+double Pancreas::getGlucagonSecretion() const { return glucagonSecretion_ng_per_hr; }
+double Pancreas::getAmylaseSecretion() const { return amylaseSecretion_U_per_L; }
+double Pancreas::getLipaseSecretion() const { return lipaseSecretion_U_per_L; }
