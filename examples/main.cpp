@@ -10,42 +10,26 @@
 #include "MedicalLib/Kidneys.h"
 #include "MedicalLib/Stomach.h"
 
-void printPatientSummary(const Patient& patient) {
-    std::cout << "--- Patient Summary (ID: " << patient.patientId << ") ---" << std::endl;
-    for (const auto& organ_ptr : patient.organs) {
-        // Print the general summary for each organ
-        std::cout << organ_ptr->getSummary() << std::endl;
-
-        // Example of accessing specialized properties using dynamic_cast
-        if (const Heart* heart = dynamic_cast<const Heart*>(organ_ptr.get())) {
-            std::cout << "  -> Specific: Patient Heart Rate is " << heart->getHeartRate() << " bpm." << std::endl;
-        }
-        if (const Lungs* lungs = dynamic_cast<const Lungs*>(organ_ptr.get())) {
-            std::cout << "  -> Specific: Patient SpO2 is " << lungs->getOxygenSaturation() << "%." << std::endl;
-        }
-        if (const Kidneys* kidneys = dynamic_cast<const Kidneys*>(organ_ptr.get())) {
-            std::cout << "  -> Specific: Kidney Filtration Rate is " << kidneys->getFiltrationRate() << " ml/min." << std::endl;
-        }
-        if (const Stomach* stomach = dynamic_cast<const Stomach*>(organ_ptr.get())) {
-            std::cout << "  -> Specific: Stomach pH is " << stomach->getPhLevel() << "." << std::endl;
-        }
-    }
-    std::cout << "------------------------------------" << std::endl;
-}
-
 int main() {
     // Initialize a new patient
     Patient patient = initializePatient(1);
+    std::cout << "Patient created with ID: " << patient.patientId << std::endl;
 
-    std::cout << "Initial State:" << std::endl;
-    printPatientSummary(patient);
+    // Simulate some time passing
+    updatePatient(patient, 60.0);
+    std::cout << "\nPatient state updated after 60 seconds." << std::endl;
 
-    // Simulate a time step
-    double deltaTime_s = 1.0;
-    updatePatient(patient, deltaTime_s);
+    // Get a summary for a specific organ
+    std::cout << "\nHeart Summary:\n" << getOrganSummary(patient, "Heart") << std::endl;
 
-    std::cout << "\nState after " << deltaTime_s << " second(s):" << std::endl;
-    printPatientSummary(patient);
+    // Get a summary for all organs
+    std::cout << "\nFull Patient Summary:\n" << getPatientSummary(patient) << std::endl;
+
+    // Get a specific organ and call a method on it
+    if (const Heart* heart = getOrgan<Heart>(patient)) {
+        std::cout << "\nSuccessfully retrieved Heart organ." << std::endl;
+        std::cout << "Direct access to heart rate: " << heart->getHeartRate() << " bpm" << std::endl;
+    }
 
     return 0;
 }
