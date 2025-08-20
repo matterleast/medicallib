@@ -3,6 +3,9 @@
 #include "Organ.h"
 #include <vector>
 #include <string>
+
+// Forward-declare the Blood struct to avoid circular dependencies
+struct Blood;
 #include <deque>
 #include <map>
 
@@ -139,8 +142,17 @@ public:
 
     // --- Getters for Key Neurological Vitals ---
 
-    /** @brief Gets the Glasgow Coma Scale score (simplified). */
+    /** @brief Gets the total Glasgow Coma Scale score (3-15). */
     int getGCS() const;
+
+    /** @brief Gets the Eye component of the GCS (1-4). */
+    int getGCSEye() const;
+
+    /** @brief Gets the Verbal component of the GCS (1-5). */
+    int getGCSVerbal() const;
+
+    /** @brief Gets the Motor component of the GCS (1-6). */
+    int getGCSMotor() const;
 
     /** @brief Gets the intracranial pressure in mmHg. */
     double getIntracranialPressure() const;
@@ -156,10 +168,14 @@ private:
     void updateActivity(double deltaTime_s);
     void updatePressures(double meanArterialPressure);
     void updateAutonomicControl(Patient& patient, double deltaTime_s);
+    void updateGCS(const Patient& patient);
     double generateEegValue();
 
     // --- Physiological Parameters ---
     int gcsScore;                          ///< Glasgow Coma Scale (3-15)
+    int gcsEye;                            ///< GCS Eye Component (1-4)
+    int gcsVerbal;                         ///< GCS Verbal Component (1-5)
+    int gcsMotor;                          ///< GCS Motor Component (1-6)
     double intracranialPressure_mmHg;      ///< ICP
     double cerebralPerfusionPressure_mmHg; ///< CPP
     double meanArterialPressure_mmHg;      ///< MAP (placeholder, needs to be linked to Heart)
