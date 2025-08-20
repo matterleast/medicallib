@@ -13,7 +13,80 @@ enum class MicturitionState {
 };
 
 /**
- * @brief Represents the Bladder, which stores urine.
+ * @brief Represents the Bladder, simulating the storage and expulsion of urine.
+ *
+ * @section bio_sec Biological Overview
+ * The urinary bladder is a muscular, hollow organ that sits in the pelvic floor. Its primary
+ * function is to collect and store urine produced by the kidneys. Urine enters the bladder
+ * via two tubes called ureters.
+ *
+ * The wall of the bladder contains a muscle called the detrusor muscle, which can relax to
+ * allow the bladder to stretch and fill, and contract to expel urine. The exit from the
+ * bladder is controlled by two sphincters. The process of urinating is called micturition.
+ * As the bladder fills, stretch receptors in its wall send signals to the brain, creating
+ * the urge to urinate.
+ *
+ * @section model_sec Code Simulation
+ * This `Bladder` class models the fill-void cycle of the urinary bladder.
+ *
+ * @subsection state_model_sec State-Based Model
+ * The simulation is managed by the `MicturitionState` enum, which tracks the current phase:
+ * - `FILLING`: The bladder is passively collecting urine from the kidneys.
+ * - `FULL`: The bladder has reached a capacity where the urge to void is strong.
+ * - `VOIDING`: The bladder is contracting to expel urine.
+ *
+ * The `addUrine()` method allows the `Kidneys` model to add to the bladder's volume. The `update()`
+ * method simulates the increase in pressure as volume increases and handles the state transitions.
+ *
+ * @subsection micturition_state_sec Micturition Cycle Diagram
+ * This diagram shows the state transitions of the bladder as it fills and voids.
+ *
+ * @dot
+ * digraph MicturitionCycle {
+ *     rankdir="TB";
+ *     node [shape=box, style=rounded];
+ *
+ *     FILLING -> FULL [label="volume > threshold"];
+ *     FULL -> VOIDING [label="voiding signal"];
+ *     VOIDING -> FILLING [label="volume = 0"];
+ * }
+ * @enddot
+ *
+ * @section usage_sec Example Usage
+ * The following C++ code shows how to simulate urine being added to the bladder and observe
+ * the change in its state.
+ *
+ * @code{.cpp}
+ * #include <iostream>
+ * #include "MedicalLib/Bladder.h"
+ * #include "MedicalLib/Patient.h"
+ *
+ * int main() {
+ *     // A patient object is needed for the update function
+ *     Patient patient;
+ *
+ *     // Create a Bladder object
+ *     Bladder bladder(1);
+ *     std::cout << "Initial State: " << bladder.getSummary() << std::endl;
+ *
+ *     // Add urine from the kidneys over time
+ *     std::cout << "\nKidneys are producing urine..." << std::endl;
+ *     for (int i = 0; i < 300; ++i) {
+ *         bladder.addUrine(1.0); // Add 1mL of urine
+ *         bladder.update(patient, 1.0);
+ *     }
+ *     std::cout << "State after adding 300mL: " << bladder.getSummary() << std::endl;
+ *
+ *     // Add more urine to reach the 'FULL' state
+ *     for (int i = 0; i < 200; ++i) {
+ *         bladder.addUrine(1.0);
+ *         bladder.update(patient, 1.0);
+ *     }
+ *     std::cout << "State after adding another 200mL: " << bladder.getSummary() << std::endl;
+ *
+ *     return 0;
+ * }
+ * @endcode
  */
 class MEDICAL_LIB_API Bladder : public Organ {
 public:
