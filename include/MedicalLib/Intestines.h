@@ -11,11 +11,11 @@ struct DigestiveEnzymes;
  * @brief Represents a segment of the intestines.
  */
 struct IntestinalSegment {
-    std::string name;
-    double length_m;
-    double motility; // Rate of chyme movement
-    double nutrientAbsorptionRate;
-    double waterAbsorptionRate;
+    std::string name;                   ///< The name of the segment (e.g., "Duodenum").
+    double length_m;                    ///< The length of the segment in meters.
+    double motility;                    ///< The rate of chyme movement.
+    double nutrientAbsorptionRate;      ///< The rate at which nutrients are absorbed.
+    double waterAbsorptionRate;         ///< The rate at which water is absorbed.
 };
 
 /**

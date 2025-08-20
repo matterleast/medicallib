@@ -11,29 +11,29 @@ class Organ;
  * @brief Represents blood pressure values.
  */
 struct BloodPressure {
-    double systolic_mmHg = 120.0;
-    double diastolic_mmHg = 80.0;
+    double systolic_mmHg = 120.0;  ///< Systolic pressure in mmHg.
+    double diastolic_mmHg = 80.0; ///< Diastolic pressure in mmHg.
 };
 
 /**
  * @brief Represents the composition of the patient's blood.
  */
 struct Blood {
-    BloodPressure bloodPressure;
-    double oxygenSaturation = 98.0;      // Normal SpO2
-    double co2PartialPressure_mmHg = 40.0; // Normal PaCO2
-    double glucose_mg_per_dL = 100.0;    // Normal fasting glucose
-    double angiotensin_au = 0.0;         // Hormone for BP control
-    double toxins_au = 0.0;              // Arbitrary units, 0 is clean
+    BloodPressure bloodPressure;         ///< The patient's blood pressure.
+    double oxygenSaturation = 98.0;      ///< Peripheral oxygen saturation (SpO2) as a percentage.
+    double co2PartialPressure_mmHg = 40.0; ///< Partial pressure of CO2 in arterial blood (PaCO2).
+    double glucose_mg_per_dL = 100.0;    ///< Blood glucose level in mg/dL.
+    double angiotensin_au = 0.0;         ///< Concentration of angiotensin, a hormone for BP control, in arbitrary units.
+    double toxins_au = 0.0;              ///< Concentration of toxins in the blood, in arbitrary units.
 };
 
 /**
  * @brief Holds all the vital signs and other medical information for a patient.
  */
 struct Patient {
-    int patientId;
-    Blood blood;
-    std::vector<std::unique_ptr<Organ>> organs;
+    int patientId;                                  ///< The unique ID for the patient.
+    Blood blood;                                    ///< The patient's blood composition and vitals.
+    std::vector<std::unique_ptr<Organ>> organs;     ///< A collection of all the patient's simulated organs.
 };
 
 // Define MEDICAL_LIB_EXPORT for exporting symbols from the DLL

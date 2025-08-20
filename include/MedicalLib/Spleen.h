@@ -7,16 +7,16 @@
  * @brief Represents the red pulp, responsible for filtering blood.
  */
 struct RedPulp {
-    double filtrationRate; // Arbitrary units
-    double rbcBreakdownRate; // Rate of old red blood cell removal
+    double filtrationRate;      ///< The rate of blood filtration, in arbitrary units.
+    double rbcBreakdownRate;    ///< The rate of old red blood cell removal.
 };
 
 /**
  * @brief Represents the white pulp, part of the immune system.
  */
 struct WhitePulp {
-    double lymphocyteCount; // in millions
-    double macrophageCount; // in millions
+    double lymphocyteCount;     ///< The number of lymphocytes, in millions.
+    double macrophageCount;     ///< The number of macrophages, in millions.
 };
 
 /**
