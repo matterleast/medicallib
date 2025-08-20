@@ -8,12 +8,22 @@
 class Organ;
 
 /**
+ * @brief Represents blood pressure values.
+ */
+struct BloodPressure {
+    double systolic_mmHg = 120.0;
+    double diastolic_mmHg = 80.0;
+};
+
+/**
  * @brief Represents the composition of the patient's blood.
  */
 struct Blood {
+    BloodPressure bloodPressure;
     double oxygenSaturation = 98.0;      // Normal SpO2
     double co2PartialPressure_mmHg = 40.0; // Normal PaCO2
     double glucose_mg_per_dL = 100.0;    // Normal fasting glucose
+    double angiotensin_au = 0.0;         // Hormone for BP control
     double toxins_au = 0.0;              // Arbitrary units, 0 is clean
 };
 

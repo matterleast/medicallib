@@ -15,6 +15,7 @@ static double getFluctuation(double stddev) {
 
 Liver::Liver(int id)
     : Organ(id, "Liver"),
+      angiotensinogen_production_rate(10.0), // Constant production
       bileProductionRate_ml_per_s(0.0069),
       glucoseProductionRate_g_per_s(0.001),
       alt_U_per_L(25.0),
@@ -97,3 +98,4 @@ double Liver::getGlucoseProductionRate() const { return glucoseProductionRate_g_
 double Liver::getAltLevel() const { return alt_U_per_L; }
 double Liver::getAstLevel() const { return ast_U_per_L; }
 double Liver::getBilirubinLevel() const { return bilirubin_mg_per_dL; }
+double Liver::getAngiotensinogenRate() const { return angiotensinogen_production_rate; }

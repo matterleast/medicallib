@@ -54,8 +54,12 @@ public:
     /** @brief Gets the total bilirubin level in mg/dL. */
     double getBilirubinLevel() const;
 
+    /** @brief Gets the production rate of angiotensinogen. */
+    double getAngiotensinogenRate() const;
+
 private:
     // --- Physiological Parameters ---
+    double angiotensinogen_production_rate; // In arbitrary units/s
     double bileProductionRate_ml_per_s;
     double glucoseProductionRate_g_per_s;
     double alt_U_per_L;      ///< Alanine Aminotransferase

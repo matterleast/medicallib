@@ -58,11 +58,28 @@ Patient initializePatient(int patientId) {
  * @param deltaTime_s The time elapsed in seconds.
  */
 void updatePatient(Patient& patient, double deltaTime_s) {
-    // Update all organs. The new update function handles all internal state changes
-    // and inter-organ interactions.
+    // First, update all the organs to their new states
     for (auto& organ : patient.organs) {
         organ->update(patient, deltaTime_s);
     }
+
+    // Next, handle systemic blood chemistry changes like RAAS
+    const Liver* liver = getOrgan<const Liver>(patient);
+    const Kidneys* kidneys = getOrgan<const Kidneys>(patient);
+
+    if (liver && kidneys) {
+        double renin = kidneys->getReninSecretionRate();
+        double angiotensinogen = liver->getAngiotensinogenRate();
+
+        // Simplified conversion: Renin acts as an enzyme to convert Angiotensinogen
+        double production_rate = renin * angiotensinogen * 0.01;
+        patient.blood.angiotensin_au += production_rate * deltaTime_s;
+    }
+
+    // Angiotensin II has a half-life of ~15-30 seconds. We'll model a decay.
+    double decay_rate = 0.04; // Corresponds to a half-life of ~17s
+    patient.blood.angiotensin_au -= patient.blood.angiotensin_au * decay_rate * deltaTime_s;
+    patient.blood.angiotensin_au = std::max(0.0, patient.blood.angiotensin_au);
 }
 
 /**

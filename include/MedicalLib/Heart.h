@@ -64,6 +64,7 @@ public:
     std::string getSummary() const override;
 
     // --- Electrical Properties ---
+    void setHeartRate(double newRate_bpm);
     double getHeartRate() const;
     const std::map<std::string, std::deque<double>>& getEkgData() const;
 

@@ -51,8 +51,12 @@ public:
     /** @brief Gets the simulated blood potassium level in mEq/L. */
     double getBloodPotassium() const;
 
+    /** @brief Gets the current rate of renin secretion. */
+    double getReninSecretionRate() const;
+
 private:
     // --- Physiological Parameters ---
+    double reninSecretionRate; // In ng/mL/hr
     double gfr_mL_per_min;
     double urineOutput_mL_per_s;
     double bloodSodium_mEq_per_L;

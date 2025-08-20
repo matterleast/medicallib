@@ -109,10 +109,6 @@ void Lungs::updateRespiratoryMechanics(double deltaTime_s) {
 }
 
 void Lungs::updateGasLevels(double deltaTime_s) {
-    // Fluctuate base vitals slightly
-    respirationRate += getFluctuation(0.01);
-    respirationRate = std::clamp(respirationRate, 12.0, 20.0);
-
     // SpO2 is affected by how well we are breathing
     double ventilationFactor = (tidalVolume_mL / 500.0) * (respirationRate / 16.0);
     double targetSpo2 = 98.0 * std::clamp(ventilationFactor, 0.9, 1.0);
@@ -174,3 +170,8 @@ double Lungs::getTidalVolume() const { return tidalVolume_mL; }
 double Lungs::getEndTidalCO2() const { return endTidalCO2_mmHg; }
 double Lungs::getPeakInspiratoryPressure() const { return peakInspiratoryPressure_cmH2O; }
 const std::deque<double>& Lungs::getCapnographyWaveform() const { return capnographyData; }
+
+// --- Setters Implementation ---
+void Lungs::setRespirationRate(double newRate_bpm) {
+    respirationRate = newRate_bpm;
+}

@@ -61,6 +61,14 @@ public:
      */
     void inflictDamage(double damage);
 
+    // --- Setters for External Control ---
+
+    /**
+     * @brief Sets the respiration rate.
+     * @param newRate_bpm The new rate in breaths per minute.
+     */
+    void setRespirationRate(double newRate_bpm);
+
     // --- Getters for Key Respiratory Vitals ---
 
     /** @brief Gets the current respiration rate in breaths per minute. */

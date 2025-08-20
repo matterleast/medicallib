@@ -41,6 +41,13 @@ public:
      */
     void storeBile(double volume_mL);
 
+    /**
+     * @brief Releases bile when stimulated (e.g., by chyme in duodenum).
+     * @param deltaTime_s The time step for this update.
+     * @return The amount of bile released in mL.
+     */
+    double releaseBile(double deltaTime_s);
+
     // --- Getters for Gallbladder State ---
 
     /** @brief Gets the current volume of stored bile in mL. */
@@ -60,5 +67,6 @@ private:
     GallbladderState currentState;
     double storedBile_mL;
     double bileConcentrationFactor; // How concentrated the bile is (1x, 5x, etc.)
+    double bileReleaseRate_ml_per_s; // Rate of bile release when contracting
     const double capacity_mL = 50.0;
 };

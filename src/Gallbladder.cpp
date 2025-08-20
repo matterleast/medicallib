@@ -10,7 +10,8 @@ Gallbladder::Gallbladder(int id)
     : Organ(id, "Gallbladder"),
       currentState(GallbladderState::STORING),
       storedBile_mL(30.0),
-      bileConcentrationFactor(5.0) {}
+      bileConcentrationFactor(5.0),
+      bileReleaseRate_ml_per_s(2.0) {}
 
 void Gallbladder::update(Patient& patient, double deltaTime_s) {
     // Get bile from the liver
@@ -20,35 +21,43 @@ void Gallbladder::update(Patient& patient, double deltaTime_s) {
     }
 
     // A real model would also be driven by CCK hormone for contraction.
-    // For now, simulate slow storage and concentration, with a periodic contraction.
+    // Contraction is now triggered externally by releaseBile().
 
     switch (currentState) {
         case GallbladderState::STORING:
             // Concentrate bile over time
             bileConcentrationFactor += 0.05 * deltaTime_s;
             bileConcentrationFactor = std::min(10.0, bileConcentrationFactor);
-
-            // For demo, contract every 40 seconds
-            static double timeSinceContraction = 0.0;
-            timeSinceContraction += deltaTime_s;
-            if (timeSinceContraction > 40.0) {
-                currentState = GallbladderState::CONTRACTING;
-                timeSinceContraction = 0.0;
-            }
             break;
 
         case GallbladderState::CONTRACTING:
-            // Release bile
-            double releasedBile = 2.0 * deltaTime_s;
-            storedBile_mL -= releasedBile;
+            // After contracting for a while, or if empty, go back to storing.
+            static double contractionTime = 0.0;
+            contractionTime += deltaTime_s;
 
-            if (storedBile_mL < 5.0) { // Stop contracting when near empty
+            if (storedBile_mL < 5.0 || contractionTime > 15.0) { // Stop contracting when near empty or after 15s
                 storedBile_mL = std::max(0.0, storedBile_mL);
-                bileConcentrationFactor = 1.0; // Bile is fresh
+                if (storedBile_mL == 0.0) {
+                    bileConcentrationFactor = 1.0; // Bile is fresh if we're totally empty
+                }
                 currentState = GallbladderState::STORING;
+                contractionTime = 0.0;
             }
             break;
     }
+}
+
+double Gallbladder::releaseBile(double deltaTime_s) {
+    if (storedBile_mL <= 0) {
+        return 0.0;
+    }
+
+    currentState = GallbladderState::CONTRACTING;
+    double amountToRelease = bileReleaseRate_ml_per_s * deltaTime_s;
+    amountToRelease = std::min(amountToRelease, storedBile_mL); // Don't release more than we have
+    storedBile_mL -= amountToRelease;
+
+    return amountToRelease;
 }
 
 void Gallbladder::storeBile(double volume_mL) {

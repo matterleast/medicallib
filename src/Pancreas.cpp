@@ -18,7 +18,8 @@ Pancreas::Pancreas(int id)
       insulinSecretion_units_per_hr(1.0),
       glucagonSecretion_ng_per_hr(50.0),
       amylaseSecretion_U_per_L(80.0),
-      lipaseSecretion_U_per_L(40.0) {}
+      lipaseSecretion_U_per_L(40.0),
+      enzymeReleaseRate_ml_per_s(0.5) {}
 
 void Pancreas::update(Patient& patient, double deltaTime_s) {
     // Hormone secretion is driven by blood glucose.
@@ -50,6 +51,19 @@ void Pancreas::update(Patient& patient, double deltaTime_s) {
     glucagonSecretion_ng_per_hr = std::clamp(glucagonSecretion_ng_per_hr, 20.0, 100.0);
     amylaseSecretion_U_per_L = std::clamp(amylaseSecretion_U_per_L, 60.0, 100.0);
     lipaseSecretion_U_per_L = std::clamp(lipaseSecretion_U_per_L, 20.0, 60.0);
+}
+
+DigestiveEnzymes Pancreas::releaseEnzymes(double deltaTime_s) {
+    DigestiveEnzymes enzymes;
+    enzymes.volume_mL = enzymeReleaseRate_ml_per_s * deltaTime_s;
+    enzymes.amylase_U_per_L = getAmylaseSecretion();
+    enzymes.lipase_U_per_L = getLipaseSecretion();
+
+    // When stimulated, enzyme production should ramp up
+    amylaseSecretion_U_per_L += 2.0 * deltaTime_s;
+    lipaseSecretion_U_per_L += 2.0 * deltaTime_s;
+
+    return enzymes;
 }
 
 std::string Pancreas::getSummary() const {
