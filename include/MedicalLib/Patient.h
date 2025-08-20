@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 
 // Forward-declare the Organ class to avoid circular dependencies
 class Organ;
@@ -38,3 +39,34 @@ MEDICAL_LIB_API Patient initializePatient(int patientId);
  * @param deltaTime_s The time elapsed in seconds.
  */
 MEDICAL_LIB_API void updatePatient(Patient& patient, double deltaTime_s);
+
+/**
+ * @brief Gets a summary of a specific organ's vitals.
+ * @param patient The patient to get the organ summary from.
+ * @param organType The type of the organ to get the summary for.
+ * @return A string containing the organ's vital signs, or an empty string if not found.
+ */
+MEDICAL_LIB_API std::string getOrganSummary(const Patient& patient, const std::string& organType);
+
+/**
+ * @brief Gets a consolidated summary of all the patient's organ vitals.
+ * @param patient The patient to get the summary from.
+ * @return A string containing the vital signs of all the patient's organs.
+ */
+MEDICAL_LIB_API std::string getPatientSummary(const Patient& patient);
+
+/**
+ * @brief Gets a pointer to a specific organ by its type.
+ * @tparam T The type of the organ to get.
+ * @param patient The patient to get the organ from.
+ * @return A const pointer to the organ if found, otherwise nullptr.
+ */
+template<typename T>
+const T* getOrgan(const Patient& patient) {
+    for (const auto& organ : patient.organs) {
+        if (const T* specificOrgan = dynamic_cast<const T*>(organ.get())) {
+            return specificOrgan;
+        }
+    }
+    return nullptr;
+}

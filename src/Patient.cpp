@@ -52,3 +52,31 @@ void updatePatient(Patient& patient, double deltaTime_s) {
         organ->update(deltaTime_s);
     }
 }
+
+/**
+ * @brief Gets a summary of a specific organ's vitals.
+ * @param patient The patient to get the organ summary from.
+ * @param organType The type of the organ to get the summary for.
+ * @return A string containing the organ's vital signs, or an empty string if not found.
+ */
+std::string getOrganSummary(const Patient& patient, const std::string& organType) {
+    for (const auto& organ : patient.organs) {
+        if (organ->getType() == organType) {
+            return organ->getSummary();
+        }
+    }
+    return "";
+}
+
+/**
+ * @brief Gets a consolidated summary of all the patient's organ vitals.
+ * @param patient The patient to get the summary from.
+ * @return A string containing the vital signs of all the patient's organs.
+ */
+std::string getPatientSummary(const Patient& patient) {
+    std::string summary;
+    for (const auto& organ : patient.organs) {
+        summary += organ->getSummary() + "\n";
+    }
+    return summary;
+}
