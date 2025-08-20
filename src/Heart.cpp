@@ -1,4 +1,5 @@
 #include "MedicalLib/Heart.h"
+#include "MedicalLib/Patient.h"
 #include <random>
 #include <algorithm>
 #include <sstream>
@@ -57,11 +58,21 @@ Heart::Heart(int id, int numLeads)
     }
 }
 
-void Heart::update(double deltaTime_s) {
+void Heart::update(Patient& patient, double deltaTime_s) {
     // --- Electrical Simulation Update ---
     totalTime_s += deltaTime_s;
+
+    // Compensatory response to hypoxia
+    double o2_saturation = patient.blood.oxygenSaturation;
+    double targetHeartRate = 75.0;
+    if (o2_saturation < 90.0) {
+        targetHeartRate = 75.0 + (90.0 - o2_saturation) * 2.0; // Increase HR as SpO2 drops
+    }
+
+    // Move current heart rate towards the target
+    heartRate += (targetHeartRate - heartRate) * 0.1 * deltaTime_s;
     heartRate += getFluctuation(0.01); // Slow variation in underlying rate
-    heartRate = std::max(60.0, std::min(heartRate, 100.0));
+    heartRate = std::max(60.0, std::min(heartRate, 140.0));
     double cycleDuration_s = 60.0 / heartRate;
 
     double oldCyclePosition = cardiacCyclePosition_s;

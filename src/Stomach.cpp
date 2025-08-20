@@ -1,4 +1,6 @@
 #include "MedicalLib/Stomach.h"
+#include "MedicalLib/Patient.h"
+#include "MedicalLib/Intestines.h"
 #include <random>
 #include <algorithm>
 #include <sstream>
@@ -20,17 +22,11 @@ Stomach::Stomach(int id)
       gastricJuiceSecretionRate_ml_per_s(0.1),
       emptyingRate_ml_per_s(0.5) {}
 
-void Stomach::update(double deltaTime_s) {
+void Stomach::update(Patient& patient, double deltaTime_s) {
     // --- State Machine Logic ---
     switch (currentState) {
         case GastricState::EMPTY:
-            // For demo, simulate food arriving every 20 seconds
-            static double timeUntilFood = 0.0;
-            timeUntilFood += deltaTime_s;
-            if (timeUntilFood > 20.0) {
-                addSubstance(150.0); // Simulate arrival of a meal
-                timeUntilFood = 0.0;
-            }
+            // In a real simulation, addSubstance would be called externally (e.g., from Esophagus)
             break;
 
         case GastricState::FILLING:
@@ -60,6 +56,11 @@ void Stomach::update(double deltaTime_s) {
         case GastricState::EMPTYING:
             // Empty chyme into intestines
             double amountToEmpty = emptyingRate_ml_per_s * deltaTime_s;
+
+            if (Intestines* intestines = getOrgan<Intestines>(patient)) {
+                intestines->receiveChyme(amountToEmpty);
+            }
+
             currentVolume_mL -= amountToEmpty;
 
             if (currentVolume_mL <= 0) {

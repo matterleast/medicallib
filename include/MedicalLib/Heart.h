@@ -52,9 +52,10 @@ public:
 
     /**
      * @brief Updates the heart's state over time, simulating the cardiac cycle.
+     * @param patient A reference to the patient object.
      * @param deltaTime_s The time elapsed in seconds.
      */
-    void update(double deltaTime_s) override;
+    void update(Patient& patient, double deltaTime_s) override;
 
     /**
      * @brief Gets a string summary of the heart's vitals, including EKG and mechanical data.

@@ -58,9 +58,10 @@ Patient initializePatient(int patientId) {
  * @param deltaTime_s The time elapsed in seconds.
  */
 void updatePatient(Patient& patient, double deltaTime_s) {
-    // Update all organs
+    // Update all organs. The new update function handles all internal state changes
+    // and inter-organ interactions.
     for (auto& organ : patient.organs) {
-        organ->update(deltaTime_s);
+        organ->update(patient, deltaTime_s);
     }
 }
 

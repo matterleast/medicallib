@@ -44,15 +44,22 @@ public:
 
     /**
      * @brief Updates the lungs' state over a time interval.
+     * @param patient A reference to the patient object.
      * @param deltaTime_s The time elapsed in seconds.
      */
-    void update(double deltaTime_s) override;
+    void update(Patient& patient, double deltaTime_s) override;
 
     /**
      * @brief Gets a string summary of the lungs' vitals.
      * @return A string containing the lungs' vital signs.
      */
     std::string getSummary() const override;
+
+    /**
+     * @brief Inflicts damage on the lungs, reducing their compliance.
+     * @param damage The amount of damage to inflict (0-1).
+     */
+    void inflictDamage(double damage);
 
     // --- Getters for Key Respiratory Vitals ---
 

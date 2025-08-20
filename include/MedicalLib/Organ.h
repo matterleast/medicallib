@@ -3,6 +3,9 @@
 #include <string>
 #include <vector>
 
+// Forward-declare to avoid circular dependency
+struct Patient;
+
 // Define MEDICAL_LIB_EXPORT for exporting symbols from the DLL
 #if defined(_WIN32)
     #if defined(MEDICAL_LIB_EXPORT)
@@ -33,9 +36,10 @@ public:
 
     /**
      * @brief Pure virtual function to update the organ's state over time.
+     * @param patient A reference to the patient object for inter-organ communication.
      * @param deltaTime_s The time elapsed in seconds.
      */
-    virtual void update(double deltaTime_s) = 0;
+    virtual void update(Patient& patient, double deltaTime_s) = 0;
 
     /**
      * @brief Pure virtual function to get a string summary of the organ's vitals.

@@ -1,4 +1,5 @@
 #include "MedicalLib/Liver.h"
+#include "MedicalLib/Patient.h" // For Blood struct
 #include <random>
 #include <algorithm>
 #include <sstream>
@@ -28,7 +29,7 @@ Liver::Liver(int id)
     }
 }
 
-void Liver::update(double deltaTime_s) {
+void Liver::update(Patient& patient, double deltaTime_s) {
     // Recalculate total capacity based on lobule health (for future use)
     totalMetabolicCapacity = 0.0;
     for (const auto& lobule : lobules) {
@@ -58,6 +59,23 @@ void Liver::update(double deltaTime_s) {
     alt_U_per_L = std::clamp(alt_U_per_L, 10.0, 40.0);
     ast_U_per_L = std::clamp(ast_U_per_L, 10.0, 40.0);
     bilirubin_mg_per_dL = std::clamp(bilirubin_mg_per_dL, 0.3, 1.2);
+
+    // --- Blood Interaction ---
+    Blood& blood = patient.blood;
+    // 1. Toxin Filtration
+    double toxinFiltrationRate = 0.1 * totalMetabolicCapacity * deltaTime_s; // a.u. per second
+    double toxinsRemoved = blood.toxins_au * toxinFiltrationRate;
+    blood.toxins_au -= toxinsRemoved;
+    blood.toxins_au = std::max(0.0, blood.toxins_au);
+
+    // 2. Glucose regulation (Gluconeogenesis / Glycogenolysis)
+    const double highGlucose = 120.0;
+    const double lowGlucose = 80.0;
+    if (patient.blood.glucose_mg_per_dL > highGlucose) {
+        patient.blood.glucose_mg_per_dL -= (patient.blood.glucose_mg_per_dL - highGlucose) * 0.1 * totalMetabolicCapacity * deltaTime_s;
+    } else if (patient.blood.glucose_mg_per_dL < lowGlucose) {
+        patient.blood.glucose_mg_per_dL += (lowGlucose - patient.blood.glucose_mg_per_dL) * 0.1 * totalMetabolicCapacity * deltaTime_s;
+    }
 }
 
 std::string Liver::getSummary() const {
