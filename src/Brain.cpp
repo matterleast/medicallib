@@ -2,6 +2,7 @@
 #include "MedicalLib/Patient.h" // For Blood struct
 #include "MedicalLib/Heart.h"   // For Heart data
 #include "MedicalLib/Lungs.h"   // For setting respiration
+#include "MedicalLib/SpinalCord.h" // For SpinalCord data
 #include <random>
 #include <algorithm>
 #include <sstream>
@@ -18,6 +19,9 @@ static double getFluctuation(double stddev) {
 Brain::Brain(int id)
     : Organ(id, "Brain"),
       gcsScore(15),
+      gcsEye(4),
+      gcsVerbal(5),
+      gcsMotor(6),
       intracranialPressure_mmHg(10.0),
       cerebralPerfusionPressure_mmHg(80.0),
       meanArterialPressure_mmHg(90.0), // Placeholder value
@@ -71,34 +75,90 @@ void Brain::update(Patient& patient, double deltaTime_s) {
     double co2_production = 0.08 * totalActivity * deltaTime_s; // mmHg per second
     blood.co2PartialPressure_mmHg += co2_production;
 
-    // Update GCS based on blood gas levels
-    if (blood.oxygenSaturation < 85.0) {
-        gcsScore = 10;
-    } else if (blood.oxygenSaturation < 75.0) {
-        gcsScore = 6;
-    } else {
-        gcsScore = 15;
-    }
-
-    if (blood.co2PartialPressure_mmHg > 60.0) {
-        gcsScore = std::min(gcsScore, 12); // CO2 narcosis
-    }
-    if (blood.co2PartialPressure_mmHg > 80.0) {
-        gcsScore = std::min(gcsScore, 8);
-    }
+    // Update GCS based on physiological parameters
+    updateGCS(patient);
 }
 
 void Brain::updateActivity(double deltaTime_s) {
     // Simulate minor fluctuations in brain activity
     frontalLobe.activityLevel += getFluctuation(0.005);
     frontalLobe.activityLevel = std::clamp(frontalLobe.activityLevel, 0.7, 0.9);
+}
 
-    // GCS is a clinical score, doesn't typically change second-to-second,
-    // but it will be affected by severe hypoxia or hypercapnia.
-    // This is a simplified model.
-    if (gcsScore > 8) { // Only check if not already severely impaired
-        if (cerebralPerfusionPressure_mmHg < 50) gcsScore = 8; // Reduced perfusion
+void Brain::updateGCS(const Patient& patient) {
+    // This is a more detailed model for GCS, breaking it down into components.
+    // The scores are based on physiological drivers like hypoxia, hypercapnia, and perfusion.
+    const Blood& blood = patient.blood;
+
+    // --- Eye Response (1-4) ---
+    if (blood.oxygenSaturation > 94.0 && cerebralPerfusionPressure_mmHg > 60) {
+        gcsEye = 4; // Spontaneous
+    } else if (blood.oxygenSaturation > 90.0 && cerebralPerfusionPressure_mmHg > 55) {
+        gcsEye = 3; // To sound
+    } else if (blood.oxygenSaturation > 80.0 || cerebralPerfusionPressure_mmHg > 50) {
+        gcsEye = 2; // To pain
+    } else {
+        gcsEye = 1; // None
     }
+
+    // --- Verbal Response (1-5) ---
+    if (blood.co2PartialPressure_mmHg < 45.0 && blood.oxygenSaturation > 94.0) {
+        gcsVerbal = 5; // Orientated
+    } else if (blood.co2PartialPressure_mmHg < 55.0 && blood.oxygenSaturation > 90.0) {
+        gcsVerbal = 4; // Confused
+    } else if (blood.co2PartialPressure_mmHg < 65.0 || blood.oxygenSaturation > 85.0) {
+        gcsVerbal = 3; // Inappropriate words
+    } else if (blood.co2PartialPressure_mmHg < 75.0 || blood.oxygenSaturation > 75.0) {
+        gcsVerbal = 2; // Incomprehensible sounds
+    } else {
+        gcsVerbal = 1; // None
+    }
+
+    // --- Motor Response (1-6) ---
+    if (cerebralPerfusionPressure_mmHg > 60 && blood.oxygenSaturation > 92.0) {
+        gcsMotor = 6; // Obeys commands
+    } else if (cerebralPerfusionPressure_mmHg > 55 && blood.oxygenSaturation > 88.0) {
+        gcsMotor = 5; // Localizes to pain
+    } else if (cerebralPerfusionPressure_mmHg > 50 || blood.oxygenSaturation > 80.0) {
+        gcsMotor = 4; // Withdraws from pain
+    } else if (cerebralPerfusionPressure_mmHg > 45 || blood.oxygenSaturation > 70.0) {
+        gcsMotor = 3; // Flexion to pain (decorticate)
+    } else if (cerebralPerfusionPressure_mmHg > 40 || blood.oxygenSaturation > 60.0) {
+        gcsMotor = 2; // Extension to pain (decerebrate)
+    } else {
+        gcsMotor = 1; // None
+    }
+
+    // --- Confounding Factors ---
+    // High toxin levels can decrease GCS
+    if (blood.toxins_au > 50.0) {
+        gcsEye = std::min(gcsEye, 2);
+        gcsVerbal = std::min(gcsVerbal, 3);
+        gcsMotor = std::min(gcsMotor, 4);
+    }
+    if (blood.toxins_au > 80.0) {
+        gcsEye = 1;
+        gcsVerbal = std::min(gcsVerbal, 2);
+        gcsMotor = std::min(gcsMotor, 3);
+    }
+
+    // Check for spinal cord injury
+    if (const SpinalCord* spinalCord = getOrgan<SpinalCord>(patient)) {
+        if (spinalCord->getMotorPathwayStatus() != SignalStatus::NORMAL) {
+            gcsMotor = 1; // No motor response if spinal cord is damaged
+        }
+    }
+
+    // Check for intubation (inferred)
+    if (const Lungs* lungs = getOrgan<Lungs>(patient)) {
+        if (lungs->getPeakInspiratoryPressure() > 5.0) { // Threshold for mechanical ventilation
+            gcsVerbal = 1; // Not testable
+        }
+    }
+
+
+    // Sum the components for the total score
+    gcsScore = gcsEye + gcsVerbal + gcsMotor;
 }
 
 void Brain::updatePressures(double meanArterialPressure) {
@@ -181,6 +241,9 @@ std::string Brain::getSummary() const {
 
 // --- Getters Implementation ---
 int Brain::getGCS() const { return gcsScore; }
+int Brain::getGCSEye() const { return gcsEye; }
+int Brain::getGCSVerbal() const { return gcsVerbal; }
+int Brain::getGCSMotor() const { return gcsMotor; }
 double Brain::getIntracranialPressure() const { return intracranialPressure_mmHg; }
 double Brain::getCerebralPerfusionPressure() const { return cerebralPerfusionPressure_mmHg; }
 const std::deque<double>& Brain::getEegWaveform() const { return eegData; }
