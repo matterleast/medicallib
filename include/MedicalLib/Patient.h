@@ -27,11 +27,19 @@ struct Patient {
 #endif
 
 /**
- * @brief Initializes a new patient with baseline vital signs.
+ * @brief Initializes a new patient with baseline vital signs and a 12-lead heart.
  * @param patientId The ID for the new patient.
  * @return A Patient struct with default healthy values.
  */
 MEDICAL_LIB_API Patient initializePatient(int patientId);
+
+/**
+ * @brief Initializes a new patient with a specific number of heart leads.
+ * @param patientId The ID for the new patient.
+ * @param numHeartLeads The number of EKG leads for the heart.
+ * @return A Patient struct with default healthy values.
+ */
+MEDICAL_LIB_API Patient initializePatient(int patientId, int numHeartLeads);
 
 /**
  * @brief Updates the patient's vital signs based on the time elapsed.

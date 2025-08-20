@@ -15,16 +15,17 @@
 #include <memory>
 
 /**
- * @brief Initializes a new patient with baseline vital signs and a standard set of organs.
+ * @brief Initializes a new patient with a specific number of heart leads.
  * @param patientId The ID for the new patient.
+ * @param numHeartLeads The number of EKG leads for the heart.
  * @return A Patient struct with default healthy values.
  */
-Patient initializePatient(int patientId) {
+Patient initializePatient(int patientId, int numHeartLeads) {
     Patient patient;
     patient.patientId = patientId;
 
     // Initialize default organs
-    patient.organs.push_back(std::make_unique<Heart>(1));
+    patient.organs.push_back(std::make_unique<Heart>(1, numHeartLeads));
     patient.organs.push_back(std::make_unique<Lungs>(2));
     patient.organs.push_back(std::make_unique<Brain>(3));
     patient.organs.push_back(std::make_unique<Liver>(4));
@@ -40,6 +41,16 @@ Patient initializePatient(int patientId) {
 
     return patient;
 }
+
+/**
+ * @brief Initializes a new patient with baseline vital signs and a 12-lead heart.
+ * @param patientId The ID for the new patient.
+ * @return A Patient struct with default healthy values.
+ */
+Patient initializePatient(int patientId) {
+    return initializePatient(patientId, 12);
+}
+
 
 /**
  * @brief Updates the patient's state by updating the state of all their organs.
