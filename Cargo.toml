@@ -12,9 +12,14 @@ name = "medicallib"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+rand = "0.8"
 
 [dev-dependencies]
 
 [[example]]
 name = "simulation"
 path = "examples/simulation.rs"
+
+[[example]]
+name = "stemi_simulation"
+path = "examples/stemi_simulation.rs"
