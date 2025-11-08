@@ -76,12 +76,17 @@ jobs:
         run: |
           mkdir -p package
           cp target/${{ matrix.target }}/release/examples/${{ matrix.example_binary }} package/
+          cp target/${{ matrix.target }}/release/${{ matrix.artifact_name }} package/
           cat > package/README.txt << 'EOF'
           MedicalLib Simulation Example
           ==============================
 
           This package contains a compiled example application demonstrating the
           MedicalLib medical simulation library.
+
+          Contents:
+          - simulation: The example application binary
+          - libmedicallib.so/dylib: The medical simulation library
 
           Usage:
             ./simulation
@@ -104,12 +109,17 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path package
           Copy-Item target/${{ matrix.target }}/release/examples/${{ matrix.example_binary }} package/
+          Copy-Item target/${{ matrix.target }}/release/${{ matrix.artifact_name }} package/
           @"
           MedicalLib Simulation Example
           ==============================
 
           This package contains a compiled example application demonstrating the
           MedicalLib medical simulation library.
+
+          Contents:
+          - simulation.exe: The example application binary
+          - medicallib.dll: The medical simulation library
 
           Usage:
             simulation.exe
