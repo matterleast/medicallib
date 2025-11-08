@@ -112,6 +112,18 @@ pub fn initialize_patient(patient_id: i32, num_heart_leads: usize) -> Patient {
     organ_map.insert("Spleen", organs.len());
     organs.push(spleen);
 
+    let bones = Box::new(bones::Bones::new(13));
+    organ_map.insert("Bones", organs.len());
+    organs.push(bones);
+
+    let nerves = Box::new(nerves::Nerves::new(14));
+    organ_map.insert("Nerves", organs.len());
+    organs.push(nerves);
+
+    let vascular = Box::new(vascular::VascularSystem::new(15));
+    organ_map.insert("VascularSystem", organs.len());
+    organs.push(vascular);
+
     Patient {
         id: patient_id,
         blood: BloodComposition::default(),

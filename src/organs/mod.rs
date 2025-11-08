@@ -13,3 +13,6 @@ pub mod gallbladder;
 pub mod kidneys;
 pub mod bladder;
 pub mod spleen;
+pub mod bones;
+pub mod nerves;
+pub mod vascular;
