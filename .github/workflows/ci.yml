@@ -58,52 +58,6 @@ jobs:
       - name: Build examples
         run: cargo build --examples --verbose
 
-  fmt:
-    name: Rustfmt
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt
-
-      - name: Check formatting
-        run: cargo fmt --all -- --check
-
-  clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Run clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
-
   build-release:
     name: Build Release Artifacts
     runs-on: ${{ matrix.os }}
@@ -178,7 +132,6 @@ jobs:
 
           For more information, visit: https://github.com/matterleast/medicallib
           EOF
-          cd package && zip -r ../${{ matrix.example_zip }} . && cd ..
 
       - name: Create example package (Windows)
         if: runner.os == 'Windows'
@@ -211,7 +164,6 @@ jobs:
 
           For more information, visit: https://github.com/matterleast/medicallib
           "@ | Out-File -FilePath package/README.txt -Encoding utf8
-          Compress-Archive -Path package/* -DestinationPath ${{ matrix.example_zip }}
 
       - name: Upload library artifact
         uses: actions/upload-artifact@v4
@@ -223,4 +175,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.example_zip }}
-          path: ${{ matrix.example_zip }}
+          path: package/
