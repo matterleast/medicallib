@@ -94,7 +94,7 @@ impl Organ for Intestines {
             * delta_time_s / 60.0;
 
         // Increase blood glucose from nutrient absorption
-        patient.blood.blood_glucose_mg_dl += nutrient_absorbed * 0.01;
+        patient.blood.chemistry.glucose_mg_dl += nutrient_absorbed * 0.01;
 
         // Water absorption in colon
         let water_absorbed = self.water_absorption_rate * delta_time_s / 60.0;

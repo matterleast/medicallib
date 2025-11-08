@@ -81,21 +81,25 @@ impl Organ for Liver {
         self.bile_production_rate = 40.0 * capacity;
 
         // Glucose production (when blood glucose is low)
-        if patient.blood.blood_glucose_mg_dl < 80.0 {
+        if patient.blood.chemistry.glucose_mg_dl < 80.0 {
             let glucose_produced = self.glucose_production_rate * capacity * delta_time_s / 60.0;
-            patient.blood.blood_glucose_mg_dl += glucose_produced * 0.01;
+            patient.blood.chemistry.glucose_mg_dl += glucose_produced * 0.01;
         }
 
         // Detoxification - remove toxins from blood
         let detox_rate = 5.0 * capacity * delta_time_s / 60.0;
-        patient.blood.toxin_level_au = (patient.blood.toxin_level_au - detox_rate).max(0.0);
+        patient.blood.chemistry.toxin_level_au = (patient.blood.chemistry.toxin_level_au - detox_rate).max(0.0);
 
-        // Enzyme levels increase with damage
+        // Enzyme levels increase with damage - update both local and blood values
         self.alt_level = 20.0 + (1.0 - capacity) * 200.0;
         self.ast_level = 20.0 + (1.0 - capacity) * 180.0;
+        patient.blood.chemistry.alt_u_l = self.alt_level;
+        patient.blood.chemistry.ast_u_l = self.ast_level;
 
-        // Bilirubin increases with damage
+        // Bilirubin increases with damage - update both local and blood values
         self.bilirubin_level = 0.5 + (1.0 - capacity) * 5.0;
+        patient.blood.chemistry.bilirubin_total_mg_dl = self.bilirubin_level;
+        patient.blood.chemistry.bilirubin_direct_mg_dl = self.bilirubin_level * 0.3; // ~30% is direct
 
         // Angiotensinogen production (RAAS system)
         self.angiotensinogen_production = 10.0 * capacity;

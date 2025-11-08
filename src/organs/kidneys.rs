@@ -84,9 +84,15 @@ impl Organ for Kidneys {
         // Urine output
         self.urine_output_rate = self.gfr_ml_per_min * 0.01;
 
-        // Maintain electrolyte balance
+        // Maintain electrolyte balance - update both local and blood values
         self.blood_sodium_meq_l = 140.0;
         self.blood_potassium_meq_l = 4.0;
+        patient.blood.chemistry.sodium_meq_l = self.blood_sodium_meq_l;
+        patient.blood.chemistry.potassium_meq_l = self.blood_potassium_meq_l;
+
+        // Update creatinine based on kidney function
+        patient.blood.chemistry.creatinine_mg_dl = 0.9 + (1.0 - self.gfr_ml_per_min / 120.0) * 3.0;
+        patient.blood.chemistry.bun_mg_dl = 12.0 + (1.0 - self.gfr_ml_per_min / 120.0) * 30.0;
 
         // Renin secretion (RAAS system)
         // Increase renin when blood pressure is low
@@ -101,7 +107,7 @@ impl Organ for Kidneys {
 
         // Remove some toxins
         let toxin_clearance = self.gfr_ml_per_min * 0.01 * delta_time_s / 60.0;
-        patient.blood.toxin_level_au = (patient.blood.toxin_level_au - toxin_clearance).max(0.0);
+        patient.blood.chemistry.toxin_level_au = (patient.blood.chemistry.toxin_level_au - toxin_clearance).max(0.0);
     }
 
     fn get_summary(&self) -> String {

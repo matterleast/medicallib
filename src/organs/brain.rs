@@ -142,7 +142,7 @@ impl Organ for Brain {
 
         // Update metabolic activity based on perfusion
         let perfusion_factor = (self.cerebral_perfusion_pressure_mmhg / 70.0).clamp(0.0, 1.5);
-        let oxygen_factor = (patient.blood.oxygen_saturation_percent / 98.0).clamp(0.0, 1.0);
+        let oxygen_factor = (patient.blood.gases.sao2_percent / 98.0).clamp(0.0, 1.0);
 
         self.frontal_lobe.metabolic_activity = perfusion_factor * oxygen_factor;
         self.parietal_lobe.metabolic_activity = perfusion_factor * oxygen_factor;
@@ -189,17 +189,17 @@ impl Organ for Brain {
 
         // Autonomic control
         // High CO2 increases both heart rate and respiration
-        if patient.blood.paco2_mmhg > 45.0 {
-            self.autonomic_heart_rate_target = 75.0 + (patient.blood.paco2_mmhg - 45.0) * 0.5;
-            self.autonomic_respiration_target = 16.0 + (patient.blood.paco2_mmhg - 45.0) * 0.3;
+        if patient.blood.gases.paco2_mmhg > 45.0 {
+            self.autonomic_heart_rate_target = 75.0 + (patient.blood.gases.paco2_mmhg - 45.0) * 0.5;
+            self.autonomic_respiration_target = 16.0 + (patient.blood.gases.paco2_mmhg - 45.0) * 0.3;
         } else {
             self.autonomic_heart_rate_target = 75.0;
             self.autonomic_respiration_target = 16.0;
         }
 
         // Low oxygen increases heart rate
-        if patient.blood.oxygen_saturation_percent < 95.0 {
-            self.autonomic_heart_rate_target += (95.0 - patient.blood.oxygen_saturation_percent) * 0.5;
+        if patient.blood.gases.sao2_percent < 95.0 {
+            self.autonomic_heart_rate_target += (95.0 - patient.blood.gases.sao2_percent) * 0.5;
         }
     }
 

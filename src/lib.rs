@@ -9,13 +9,22 @@
 //! - Digestive system (Stomach, Esophagus, Intestines, Pancreas, Liver, Gallbladder)
 //! - Urinary system (Kidneys, Bladder)
 //! - Immune system (Spleen)
+//!
+//! The library also includes a comprehensive blood system based on real blood characteristics:
+//! - Blood typing (ABO and Rh factor)
+//! - Complete blood count (CBC) with differential
+//! - Comprehensive metabolic panel (CMP)
+//! - Coagulation factors
+//! - Arterial blood gas (ABG) analysis
 
+pub mod blood;
 pub mod organ;
 pub mod patient;
 pub mod organs;
 
+pub use blood::{AboType, RhFactor, BloodType, BloodCells, BloodChemistry, ClottingFactors, BloodGases, BloodComposition, WbcDifferential};
 pub use organ::Organ;
-pub use patient::{BloodComposition, Patient, initialize_patient, update_patient, get_patient_summary};
+pub use patient::{Patient, initialize_patient, update_patient, get_patient_summary};
 
 /// Calculate Body Mass Index (BMI)
 ///

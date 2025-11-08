@@ -1,41 +1,9 @@
 //! Patient management and blood composition
 
+use crate::blood::BloodComposition;
 use crate::organ::Organ;
 use crate::organs::*;
 use std::collections::HashMap;
-
-/// Blood composition and vital signs
-#[derive(Debug, Clone)]
-pub struct BloodComposition {
-    /// Systolic blood pressure (mmHg)
-    pub blood_pressure_systolic: f64,
-    /// Diastolic blood pressure (mmHg)
-    pub blood_pressure_diastolic: f64,
-    /// Oxygen saturation (%)
-    pub oxygen_saturation_percent: f64,
-    /// Partial pressure of CO2 (mmHg)
-    pub paco2_mmhg: f64,
-    /// Blood glucose (mg/dL)
-    pub blood_glucose_mg_dl: f64,
-    /// Angiotensin II concentration (arbitrary units)
-    pub angiotensin_ii_au: f64,
-    /// Toxin levels (arbitrary units)
-    pub toxin_level_au: f64,
-}
-
-impl Default for BloodComposition {
-    fn default() -> Self {
-        Self {
-            blood_pressure_systolic: 120.0,
-            blood_pressure_diastolic: 80.0,
-            oxygen_saturation_percent: 98.0,
-            paco2_mmhg: 40.0,
-            blood_glucose_mg_dl: 90.0,
-            angiotensin_ii_au: 0.0,
-            toxin_level_au: 0.0,
-        }
-    }
-}
 
 /// Patient structure containing all organ systems
 pub struct Patient {
@@ -190,10 +158,10 @@ pub fn update_patient(patient: &mut Patient, delta_time_s: f64) {
 
     // Angiotensin II production
     let angiotensin_production = renin_secretion * angiotensinogen * 0.1;
-    patient.blood.angiotensin_ii_au += angiotensin_production * delta_time_s;
+    patient.blood.chemistry.angiotensin_ii_au += angiotensin_production * delta_time_s;
 
     // Angiotensin II decay
-    patient.blood.angiotensin_ii_au *= 0.95_f64.powf(delta_time_s);
+    patient.blood.chemistry.angiotensin_ii_au *= 0.95_f64.powf(delta_time_s);
 }
 
 /// Get a summary of all patient vitals
@@ -201,9 +169,9 @@ pub fn get_patient_summary(patient: &Patient) -> String {
     format!(
         "Patient {} - SpO2: {:.1}%, PaCO2: {:.1} mmHg, Glucose: {:.1} mg/dL, Toxins: {:.1} AU",
         patient.id,
-        patient.blood.oxygen_saturation_percent,
-        patient.blood.paco2_mmhg,
-        patient.blood.blood_glucose_mg_dl,
-        patient.blood.toxin_level_au
+        patient.blood.gases.sao2_percent,
+        patient.blood.gases.paco2_mmhg,
+        patient.blood.chemistry.glucose_mg_dl,
+        patient.blood.chemistry.toxin_level_au
     )
 }

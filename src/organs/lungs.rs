@@ -176,8 +176,9 @@ impl Organ for Lungs {
         self.end_tidal_co2_mmhg = 38.0 + (1.0 - compliance_factor) * 20.0;
 
         // Update patient blood gases
-        patient.blood.oxygen_saturation_percent = self.oxygen_saturation_percent;
-        patient.blood.paco2_mmhg = self.end_tidal_co2_mmhg;
+        patient.blood.gases.sao2_percent = self.oxygen_saturation_percent;
+        patient.blood.gases.paco2_mmhg = self.end_tidal_co2_mmhg;
+        patient.blood.gases.pao2_mmhg = self.oxygen_saturation_percent * 0.95; // Approximate PaO2 from SpO2
 
         // Peak inspiratory pressure affected by compliance
         self.peak_inspiratory_pressure = 15.0 / compliance_factor.max(0.1);
@@ -202,8 +203,8 @@ impl Organ for Lungs {
 
         // Respond to blood chemistry
         // High CO2 increases respiration rate
-        if patient.blood.paco2_mmhg > 45.0 {
-            self.respiration_rate_bpm = 16.0 + (patient.blood.paco2_mmhg - 45.0) * 0.5;
+        if patient.blood.gases.paco2_mmhg > 45.0 {
+            self.respiration_rate_bpm = 16.0 + (patient.blood.gases.paco2_mmhg - 45.0) * 0.5;
             self.respiration_rate_bpm = self.respiration_rate_bpm.min(30.0);
         } else {
             self.respiration_rate_bpm = 16.0;
