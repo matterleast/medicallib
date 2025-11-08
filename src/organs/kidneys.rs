@@ -105,8 +105,9 @@ impl Organ for Kidneys {
             self.renin_secretion = 1.0;
         }
 
-        // Remove some toxins
-        let toxin_clearance = self.gfr_ml_per_min * 0.01 * delta_time_s / 60.0;
+        // Remove some toxins through filtration
+        // Kidneys can clear approximately 0.5 toxin units per second at normal GFR
+        let toxin_clearance = (self.gfr_ml_per_min / 100.0) * 0.5 * delta_time_s;
         patient.blood.chemistry.toxin_level_au = (patient.blood.chemistry.toxin_level_au - toxin_clearance).max(0.0);
     }
 

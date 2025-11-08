@@ -87,7 +87,8 @@ impl Organ for Liver {
         }
 
         // Detoxification - remove toxins from blood
-        let detox_rate = 5.0 * capacity * delta_time_s / 60.0;
+        // Liver can clear approximately 1-2 toxin units per second at full capacity
+        let detox_rate = 1.5 * capacity * delta_time_s;
         patient.blood.chemistry.toxin_level_au = (patient.blood.chemistry.toxin_level_au - detox_rate).max(0.0);
 
         // Enzyme levels increase with damage - update both local and blood values
