@@ -241,9 +241,9 @@ impl Organ for Heart {
 
         // Respond to blood chemistry
         // High toxins reduce heart rate and ejection fraction
-        if patient.blood.toxin_level_au > 50.0 {
-            self.heart_rate_bpm = (75.0 - patient.blood.toxin_level_au * 0.1).max(40.0);
-            self.ejection_fraction_percent = (60.0 - patient.blood.toxin_level_au * 0.05).max(30.0);
+        if patient.blood.chemistry.toxin_level_au > 50.0 {
+            self.heart_rate_bpm = (75.0 - patient.blood.chemistry.toxin_level_au * 0.1).max(40.0);
+            self.ejection_fraction_percent = (60.0 - patient.blood.chemistry.toxin_level_au * 0.05).max(30.0);
         } else {
             self.heart_rate_bpm = 75.0;
             self.ejection_fraction_percent = 60.0;

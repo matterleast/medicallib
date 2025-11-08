@@ -47,7 +47,7 @@ impl Pancreas {
 impl Organ for Pancreas {
     fn update(&mut self, patient: &mut Patient, delta_time_s: f64) {
         // Endocrine function: regulate blood glucose
-        let glucose_error = patient.blood.blood_glucose_mg_dl - 90.0;
+        let glucose_error = patient.blood.chemistry.glucose_mg_dl - 90.0;
 
         if glucose_error > 0.0 {
             // High glucose: secrete insulin
@@ -56,7 +56,7 @@ impl Organ for Pancreas {
 
             // Insulin lowers blood glucose
             let glucose_consumed = self.insulin_secretion_rate * delta_time_s / 60.0;
-            patient.blood.blood_glucose_mg_dl -= glucose_consumed;
+            patient.blood.chemistry.glucose_mg_dl -= glucose_consumed;
         } else {
             // Low glucose: secrete glucagon
             self.insulin_secretion_rate = 0.5;
@@ -64,10 +64,10 @@ impl Organ for Pancreas {
 
             // Glucagon raises blood glucose
             let glucose_produced = self.glucagon_secretion_rate * delta_time_s / 60.0;
-            patient.blood.blood_glucose_mg_dl += glucose_produced;
+            patient.blood.chemistry.glucose_mg_dl += glucose_produced;
         }
 
-        patient.blood.blood_glucose_mg_dl = patient.blood.blood_glucose_mg_dl.clamp(60.0, 200.0);
+        patient.blood.chemistry.glucose_mg_dl = patient.blood.chemistry.glucose_mg_dl.clamp(60.0, 200.0);
 
         // Exocrine function: produce digestive enzymes
         let enzyme_produced = self.enzyme_production_rate * delta_time_s / 60.0;
