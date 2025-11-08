@@ -37,18 +37,26 @@ jobs:
             target: x86_64-unknown-linux-gnu
             artifact_name: libmedicallib.so
             asset_name: libmedicallib-linux-x86_64.so
+            example_binary: simulation
+            example_zip: medicallib-examples-linux-x86_64.zip
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             artifact_name: medicallib.dll
             asset_name: medicallib-windows-x86_64.dll
+            example_binary: simulation.exe
+            example_zip: medicallib-examples-windows-x86_64.zip
           - os: macos-latest
             target: x86_64-apple-darwin
             artifact_name: libmedicallib.dylib
             asset_name: libmedicallib-macos-x86_64.dylib
+            example_binary: simulation
+            example_zip: medicallib-examples-macos-x86_64.zip
           - os: macos-latest
             target: aarch64-apple-darwin
             artifact_name: libmedicallib.dylib
             asset_name: libmedicallib-macos-aarch64.dylib
+            example_binary: simulation
+            example_zip: medicallib-examples-macos-aarch64.zip
     steps:
       - uses: actions/checkout@v4
 
@@ -60,7 +68,65 @@ jobs:
       - name: Build release
         run: cargo build --release --target ${{ matrix.target }}
 
-      - name: Upload Release Asset
+      - name: Build examples
+        run: cargo build --release --examples --target ${{ matrix.target }}
+
+      - name: Create example package (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p package
+          cp target/${{ matrix.target }}/release/examples/${{ matrix.example_binary }} package/
+          cat > package/README.txt << 'EOF'
+          MedicalLib Simulation Example
+          ==============================
+
+          This package contains a compiled example application demonstrating the
+          MedicalLib medical simulation library.
+
+          Usage:
+            ./simulation
+
+          The simulation demonstrates:
+          - Patient initialization with organs
+          - Blood chemistry tracking
+          - Toxin processing by the liver
+          - Digestive system simulation
+          - Lung injury events
+          - Real-time physiological updates
+
+          For more information, visit: https://github.com/matterleast/medicallib
+          EOF
+          cd package && zip -r ../${{ matrix.example_zip }} . && cd ..
+
+      - name: Create example package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path package
+          Copy-Item target/${{ matrix.target }}/release/examples/${{ matrix.example_binary }} package/
+          @"
+          MedicalLib Simulation Example
+          ==============================
+
+          This package contains a compiled example application demonstrating the
+          MedicalLib medical simulation library.
+
+          Usage:
+            simulation.exe
+
+          The simulation demonstrates:
+          - Patient initialization with organs
+          - Blood chemistry tracking
+          - Toxin processing by the liver
+          - Digestive system simulation
+          - Lung injury events
+          - Real-time physiological updates
+
+          For more information, visit: https://github.com/matterleast/medicallib
+          "@ | Out-File -FilePath package/README.txt -Encoding utf8
+          Compress-Archive -Path package/* -DestinationPath ${{ matrix.example_zip }}
+
+      - name: Upload Library Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -69,3 +135,13 @@ jobs:
           asset_path: ./target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
           asset_name: ${{ matrix.asset_name }}
           asset_content_type: application/octet-stream
+
+      - name: Upload Example Package Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./${{ matrix.example_zip }}
+          asset_name: ${{ matrix.example_zip }}
+          asset_content_type: application/zip
