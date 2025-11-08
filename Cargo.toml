@@ -1,0 +1,20 @@
+[package]
+name = "medicallib"
+version = "0.1.0"
+edition = "2021"
+authors = ["MedicalLib Team"]
+description = "A comprehensive medical simulation library for modeling human physiological systems"
+license = "MIT"
+repository = "https://github.com/matterleast/medicallib"
+
+[lib]
+name = "medicallib"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+
+[dev-dependencies]
+
+[[example]]
+name = "simulation"
+path = "examples/simulation.rs"

@@ -1,10 +1,10 @@
 # Agent Instructions for MedicalLib
 
-This document provides instructions for developers and agents working on the MedicalLib C++ project.
+This document provides instructions for developers and agents working on the MedicalLib Rust project.
 
 ## Project Purpose
 
-MedicalLib is a C++ library for detailed mathematical simulations of various medical information. Its goal is to provide a robust set of tools for applications that require calculations related to:
+MedicalLib is a Rust library for detailed mathematical simulations of various medical information. Its goal is to provide a robust set of tools for applications that require calculations related to:
 
 -   Heart rate and EKG readings
 -   Body metrics (e.g., BMI, body fat percentage)
@@ -13,51 +13,82 @@ MedicalLib is a C++ library for detailed mathematical simulations of various med
 
 ## Project Structure
 
-This project is structured as a software-agnostic C++ library, designed for easy integration into various larger projects, including game engines like Unreal Engine.
+This project is structured as a software-agnostic Rust library, designed for easy integration into various larger projects.
 
--   `/include`: Contains all public header files.
-    -   `/include/MedicalLib`: Headers for the MedicalLib library are placed here to prevent naming conflicts.
--   `/src`: Contains the implementation (.cpp) files for the library.
--   `/examples`: Contains example code showing how to use the library.
--   `/build`: This directory is created by the build scripts and contains the compiled library and example executables. It is not tracked by git.
--   `CMakeLists.txt`: The root CMake file for building the project.
+-   `/src`: Contains the Rust source code for the library
+    -   `/src/organs`: Individual organ implementations
+    -   `/src/lib.rs`: Main library interface
+    -   `/src/patient.rs`: Patient management system
+    -   `/src/organ.rs`: Base organ trait
+-   `/examples`: Contains example code showing how to use the library
+-   `/target`: This directory is created by Cargo and contains the compiled library and example executables. It is not tracked by git.
+-   `Cargo.toml`: The Cargo manifest file for building the project
 
 ## Building the Project
 
-To build the project, use the provided build scripts:
+To build the project, use Cargo:
 
--   On Linux or macOS: `./build.sh`
--   On Windows: `build.bat`
+```bash
+# Build the library
+cargo build
 
-The compiled library will be placed in `build/lib`, and the example executable will be in `build/examples/`.
+# Build in release mode
+cargo build --release
+
+# Run the simulation example
+cargo run --example simulation
+
+# Build documentation
+cargo doc --open
+```
+
+The compiled library will be in `target/debug` (or `target/release`), and examples will be in `target/debug/examples`.
 
 ## Coding Standards
 
-### Doxygen Documentation
+### Documentation
 
-All functions, classes, structs, enums, and public member variables must be documented using Doxygen-compatible comments. This ensures that the code is easy to understand and that high-quality documentation can be automatically generated.
+All public functions, structs, enums, and traits must be documented using Rust documentation comments. This ensures that the code is easy to understand and that high-quality documentation can be automatically generated.
 
-- Use `/** ... */` for multi-line comments.
-- Use `///` for single-line comments.
-- Use `@brief` to provide a short description.
-- Use `@param` to document function parameters.
-- Use `@return` to describe the return value.
+- Use `///` for documenting items (functions, structs, etc.)
+- Use `//!` for module-level documentation
+- Use markdown formatting in documentation
 
 Example:
-```cpp
-/**
- * @brief Calculates the Body Mass Index (BMI).
- * @param weight_kg The weight in kilograms.
- * @param height_m The height in meters.
- * @return The calculated BMI.
- */
-MEDICAL_LIB_API double calculateBMI(double weight_kg, double height_m);
+```rust
+/// Calculate Body Mass Index (BMI)
+///
+/// # Arguments
+/// * `weight_kg` - Weight in kilograms
+/// * `height_m` - Height in meters
+///
+/// # Returns
+/// The calculated BMI value
+pub fn calculate_bmi(weight_kg: f64, height_m: f64) -> f64 {
+    if height_m <= 0.0 {
+        return 0.0;
+    }
+    weight_kg / (height_m * height_m)
+}
 ```
 
-## Integration with Unreal Engine
+## Using the Library
 
-To use this library in an Unreal Engine plugin:
+Add MedicalLib to your `Cargo.toml`:
 
-1.  Copy the contents of the `include` directory into your plugin's `ThirdParty/MedicalLib/include` directory.
-2.  Compile the library for the desired platforms (e.g., Win64, Linux) and copy the compiled library files (e.g., `.lib`, `.so`, `.a`) into your plugin's `ThirdParty/MedicalLib/lib/<Platform>` directory.
-3.  In your plugin's `.Build.cs` file, add the necessary paths for the include files and link against the compiled library.
+```toml
+[dependencies]
+medicallib = { path = "../medicallib" }
+```
+
+Then use it in your code:
+
+```rust
+use medicallib::*;
+
+fn main() {
+    let mut patient = initialize_patient(1, 12);
+    update_patient(&mut patient, 0.1);
+    println!("{}", get_patient_summary(&patient));
+}
+```
