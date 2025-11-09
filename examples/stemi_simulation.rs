@@ -68,7 +68,7 @@ fn main() {
     // Now simulate for several minutes and watch the cascade unfold
     // Extended to 30 minutes to see full progression: Ischemic → Injured → PVCs → VT → VF
     let simulation_time_s = 1800.0; // 30 minutes
-    let delta_time_s = 0.5;
+    let delta_time_s = 2.0;  // 2 second steps (faster simulation, 900 steps total)
     let num_steps = (simulation_time_s / delta_time_s) as i32;
 
     println!("\n╔═══════════════════════════════════════════════════════════╗");
@@ -77,6 +77,13 @@ fn main() {
 
     let mut last_rhythm_report = String::new();
     let mut event_log = Vec::new();
+
+    // Track tissue states to detect transitions
+    use std::collections::HashMap;
+    let mut segment_states: HashMap<String, String> = HashMap::new();
+    let mut last_chest_pain_milestone = 0;
+    let mut last_ef_report = 60.0;
+    let mut last_ectopic_count = 0;
 
     for i in 0..num_steps {
         let current_time = i as f64 * delta_time_s;
@@ -103,6 +110,58 @@ fn main() {
                 );
                 event_log.push(msg.clone());
                 last_rhythm_report = rhythm;
+            }
+
+            // Track tissue state changes
+            for segment in &heart.myocardial_segments {
+                let region_name = format!("{:?}", segment.region);
+                let current_state = format!("{:?}", segment.cellular_state).split('{').next().unwrap().trim().to_string();
+
+                if let Some(last_state) = segment_states.get(&region_name) {
+                    if last_state != &current_state {
+                        let msg = format!("[{:>5.0}s] {} tissue: {} → {}",
+                            current_time,
+                            region_name,
+                            last_state,
+                            current_state
+                        );
+                        event_log.push(msg);
+                    }
+                }
+                segment_states.insert(region_name, current_state);
+            }
+
+            // Track ectopic beats
+            let total_ectopic_beats: usize = heart.myocardial_segments
+                .iter()
+                .map(|s| s.ectopic_beats.len())
+                .sum();
+
+            if total_ectopic_beats > last_ectopic_count {
+                let new_beats = total_ectopic_beats - last_ectopic_count;
+                let msg = format!("[{:>5.0}s] {} ectopic beat(s) detected (total: {})",
+                    current_time, new_beats, total_ectopic_beats);
+                event_log.push(msg);
+            }
+            last_ectopic_count = total_ectopic_beats;
+
+            // Track chest pain milestones
+            let chest_pain = heart.get_chest_pain_level();
+            let pain_milestone = (chest_pain as i32 / 2) * 2; // Track every 2 points
+            if pain_milestone > last_chest_pain_milestone && pain_milestone >= 2 {
+                let msg = format!("[{:>5.0}s] Chest pain reached {}/10 (severe ischemic pain)",
+                    current_time, pain_milestone);
+                event_log.push(msg);
+                last_chest_pain_milestone = pain_milestone;
+            }
+
+            // Track ejection fraction drops
+            let ef = heart.ejection_fraction_percent;
+            if ef < last_ef_report - 10.0 {
+                let msg = format!("[{:>5.0}s] Ejection fraction dropped to {:.0}% (cardiac function declining)",
+                    current_time, ef);
+                event_log.push(msg);
+                last_ef_report = ef;
             }
 
             // Display vital signs
@@ -184,11 +243,17 @@ fn main() {
             }
         }
 
-        // Event log
+        // Event log - show last 10 events
         if !event_log.is_empty() {
-            println!("┌─ EVENT LOG ──────────────────────────────────────────────┐");
-            for (_idx, event) in event_log.iter().enumerate().rev().take(5).rev() {
-                println!("│ {} │", event);
+            println!("┌─ EVENT LOG ({} total events) ──────────────────────────────┐", event_log.len());
+            for event in event_log.iter().rev().take(10).rev() {
+                // Truncate if too long
+                let display_event = if event.len() > 58 {
+                    format!("{}...", &event[..55])
+                } else {
+                    event.clone()
+                };
+                println!("│ {:58} │", display_event);
             }
             println!("└──────────────────────────────────────────────────────────┘\n");
         }
