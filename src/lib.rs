@@ -22,6 +22,7 @@ pub mod organ;
 pub mod patient;
 pub mod organs;
 pub mod myocardial_tissue;
+pub mod tissue_injury;
 
 pub use blood::{AboType, RhFactor, BloodType, BloodCells, BloodChemistry, ClottingFactors, BloodGases, BloodComposition, WbcDifferential};
 pub use organ::Organ;
