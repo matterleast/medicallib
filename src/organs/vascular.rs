@@ -311,13 +311,31 @@ impl VascularSystem {
 
     /// Calculate blood flow rates through all vessels
     pub fn calculate_flow_rates(&mut self, cardiac_output_ml_per_min: f64) {
+        // Pre-calculate total arterial conductance (1/R) for parallel circuit
+        let total_arterial_conductance: f64 = self.vessels
+            .iter()
+            .filter(|v| matches!(v.vessel_type, VesselType::Artery))
+            .map(|v| {
+                let r = v.flow_resistance();
+                if r > 0.0 { 1.0 / r } else { 0.0 }
+            })
+            .sum();
+
         // Arteries receive blood from heart
         for vessel in &mut self.vessels {
             match vessel.vessel_type {
                 VesselType::Artery => {
-                    // Major arteries split cardiac output
-                    let flow_fraction = vessel.blood_volume_ml / self.arterial_blood_volume_ml.max(1.0);
-                    vessel.blood_flow_rate_ml_per_min = cardiac_output_ml_per_min * flow_fraction * 0.3;
+                    // Flow inversely proportional to resistance (parallel circuit)
+                    // Q = ΔP / R, where total flow is distributed by conductance
+                    let resistance = vessel.flow_resistance();
+
+                    if total_arterial_conductance > 0.0 && resistance > 0.0 {
+                        // Conductance fraction = (1/R) / Σ(1/R)
+                        let conductance_fraction = (1.0 / resistance) / total_arterial_conductance;
+                        vessel.blood_flow_rate_ml_per_min = cardiac_output_ml_per_min * conductance_fraction * 0.25;
+                    } else {
+                        vessel.blood_flow_rate_ml_per_min = 0.0;
+                    }
                     vessel.calculate_velocity();
                 }
                 VesselType::Arteriole | VesselType::Capillary => {
