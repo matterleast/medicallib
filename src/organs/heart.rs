@@ -327,7 +327,9 @@ impl Heart {
                 MyocardialRegion::Inferior | MyocardialRegion::Posterior | MyocardialRegion::RightVentricular => rca_flow_actual,
             };
 
-            segment.update(flow, arterial_o2_content, delta_time_s);
+            // Pass heart rate so O2 consumption can scale dynamically
+            // This creates the vicious cycle: pain → ↑HR → ↑O2 demand → worse ischemia → more pain
+            segment.update(flow, arterial_o2_content, self.heart_rate_bpm, delta_time_s);
         }
     }
 

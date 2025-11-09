@@ -181,6 +181,9 @@ fn main() {
                     if matches!(segment.region, myocardial_tissue::MyocardialRegion::Anterior) {
                         println!("  Anterior segment:");
                         println!("    Flow: {:.2} mL/min", segment.blood_flow_ml_per_min);
+                        println!("    O2 delivery: {:.2} mL/min", segment.oxygen_delivery_ml_per_min);
+                        println!("    O2 demand: {:.2} mL/min (↑ with HR!)", segment.oxygen_consumption_ml_per_min);
+                        println!("    O2 deficit: {:.2} mL/min", (segment.oxygen_consumption_ml_per_min - segment.oxygen_delivery_ml_per_min).max(0.0));
                         println!("    State: {:?}", segment.cellular_state);
                     }
                 }

@@ -220,7 +220,8 @@ pub struct MyocardialSegment {
     pub blood_flow_ml_per_min: f64,           // Actual flow through coronary artery
     pub baseline_flow_ml_per_min: f64,        // Normal flow requirement
     pub oxygen_delivery_ml_per_min: f64,      // O2 delivery = flow × O2 content
-    pub oxygen_consumption_ml_per_min: f64,   // O2 demand from metabolism
+    pub oxygen_consumption_ml_per_min: f64,   // O2 demand from metabolism (dynamic - varies with HR)
+    pub baseline_oxygen_consumption_ml_per_min: f64,  // O2 consumption at rest (HR 75 bpm)
 
     // Metabolic byproducts
     pub lactic_acid_mmol: f64,                // Anaerobic metabolism
@@ -242,6 +243,9 @@ impl MyocardialSegment {
         // Calculate baseline flow: ~1 mL/min per gram of myocardium
         let baseline_flow = mass_grams;
 
+        // Baseline O2 consumption at rest (HR ~75 bpm, normal contractility)
+        let baseline_o2_consumption = mass_grams * 0.1;  // ~10% of flow is O2
+
         Self {
             region,
             cellular_state: CellularState::Healthy,
@@ -249,7 +253,8 @@ impl MyocardialSegment {
             blood_flow_ml_per_min: baseline_flow,
             baseline_flow_ml_per_min: baseline_flow,
             oxygen_delivery_ml_per_min: 0.0,
-            oxygen_consumption_ml_per_min: mass_grams * 0.1,  // ~10% of flow is O2
+            oxygen_consumption_ml_per_min: baseline_o2_consumption,
+            baseline_oxygen_consumption_ml_per_min: baseline_o2_consumption,
             lactic_acid_mmol: 0.0,
             adenosine_au: 0.0,
             troponin_release_ng_ml: 0.0,
@@ -262,11 +267,28 @@ impl MyocardialSegment {
     }
 
     /// Update the segment's state based on blood flow and oxygen delivery
-    pub fn update(&mut self, blood_flow_ml_per_min: f64, arterial_o2_content_ml_per_dl: f64, delta_time_s: f64) {
+    ///
+    /// # Arguments
+    /// * `blood_flow_ml_per_min` - Actual coronary blood flow
+    /// * `arterial_o2_content_ml_per_dl` - Arterial oxygen content
+    /// * `heart_rate_bpm` - Current heart rate (affects O2 demand)
+    /// * `delta_time_s` - Time step
+    pub fn update(&mut self, blood_flow_ml_per_min: f64, arterial_o2_content_ml_per_dl: f64,
+                  heart_rate_bpm: f64, delta_time_s: f64) {
         self.blood_flow_ml_per_min = blood_flow_ml_per_min;
 
         // Calculate oxygen delivery: flow (mL/min) × O2 content (mL O2 per 100mL blood)
         self.oxygen_delivery_ml_per_min = (blood_flow_ml_per_min / 100.0) * arterial_o2_content_ml_per_dl;
+
+        // CRITICAL: Oxygen consumption scales with heart rate and contractility!
+        // More beats per minute = more ATP consumed = more O2 needed
+        // This creates a VICIOUS CYCLE in ischemia:
+        //   Pain → ↑HR → ↑O2 demand → ↑O2 deficit → more pain → ↑HR
+        let hr_factor = heart_rate_bpm / 75.0;  // 75 bpm is baseline
+        let contractility_factor = self.contractility.max(0.5);  // Even damaged tissue has some metabolic demand
+        self.oxygen_consumption_ml_per_min = self.baseline_oxygen_consumption_ml_per_min
+            * hr_factor
+            * contractility_factor;
 
         // Determine if tissue is ischemic
         let is_ischemic = self.oxygen_delivery_ml_per_min < self.oxygen_consumption_ml_per_min;
