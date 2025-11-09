@@ -138,6 +138,22 @@ pub fn initialize_patient(patient_id: i32, num_heart_leads: usize) -> Patient {
 /// * `patient` - Mutable reference to the patient
 /// * `delta_time_s` - Time step in seconds
 pub fn update_patient(patient: &mut Patient, delta_time_s: f64) {
+    // PRE-UPDATE: Extract coronary flows from vascular system
+    // This is needed because organs can't access each other during update due to borrow rules
+    let (lad_flow, lcx_flow, rca_flow) = if let Some(vascular) = patient.get_organ::<vascular::VascularSystem>("VascularSystem") {
+        (
+            vascular.get_coronary_flow("LAD"),
+            vascular.get_coronary_flow("LCx"),
+            vascular.get_coronary_flow("RCA")
+        )
+    } else {
+        (40.0, 30.0, 35.0)  // Default flows
+    };
+
+    patient.blood.coronary_lad_flow = lad_flow;
+    patient.blood.coronary_lcx_flow = lcx_flow;
+    patient.blood.coronary_rca_flow = rca_flow;
+
     // Update all organs
     for i in 0..patient.organs.len() {
         // Split the borrows to allow organ to access patient

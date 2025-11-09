@@ -440,6 +440,12 @@ pub struct BloodComposition {
 
     /// Blood pressure - diastolic (mmHg)
     pub blood_pressure_diastolic: f64,
+
+    /// Coronary artery flows (mL/min) - cached from vascular system
+    /// These are updated by update_patient() before organ updates
+    pub coronary_lad_flow: f64,
+    pub coronary_lcx_flow: f64,
+    pub coronary_rca_flow: f64,
 }
 
 impl Default for BloodComposition {
@@ -452,6 +458,9 @@ impl Default for BloodComposition {
             gases: BloodGases::default(),
             blood_pressure_systolic: 120.0,
             blood_pressure_diastolic: 80.0,
+            coronary_lad_flow: 40.0,
+            coronary_lcx_flow: 30.0,
+            coronary_rca_flow: 35.0,
         }
     }
 }

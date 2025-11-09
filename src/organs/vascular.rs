@@ -183,6 +183,13 @@ impl VascularSystem {
 
         // Major arteries
         vessels.push(Vessel::new("Aorta", VesselType::Artery, 25.0, 40.0));
+
+        // Coronary arteries - CRITICAL for myocardial perfusion
+        vessels.push(Vessel::new("Left Main Coronary", VesselType::Artery, 4.5, 1.0));
+        vessels.push(Vessel::new("LAD", VesselType::Artery, 3.5, 12.0));  // Left anterior descending
+        vessels.push(Vessel::new("LCx", VesselType::Artery, 3.0, 8.0));   // Left circumflex
+        vessels.push(Vessel::new("RCA", VesselType::Artery, 3.5, 15.0));  // Right coronary artery
+
         vessels.push(Vessel::new("Carotid Artery (L)", VesselType::Artery, 8.0, 20.0));
         vessels.push(Vessel::new("Carotid Artery (R)", VesselType::Artery, 8.0, 20.0));
         vessels.push(Vessel::new("Subclavian Artery (L)", VesselType::Artery, 9.0, 15.0));
@@ -304,13 +311,65 @@ impl VascularSystem {
 
     /// Calculate blood flow rates through all vessels
     pub fn calculate_flow_rates(&mut self, cardiac_output_ml_per_min: f64) {
-        // Arteries receive blood from heart
+        // CRITICAL: Coronary arteries need special handling!
+        // They come off the aortic root and get ~5% of cardiac output (250 mL/min at rest)
+        // They should NOT compete with systemic arteries in the same parallel distribution
+
+        // Separate coronary arteries from systemic arteries
+        // Note: Left Main is excluded - it's a conduit that splits into LAD/LCx, not a parallel branch
+        let coronary_names = ["LAD", "LCx", "RCA"];
+
+        // Calculate total CORONARY conductance
+        let total_coronary_conductance: f64 = self.vessels
+            .iter()
+            .filter(|v| matches!(v.vessel_type, VesselType::Artery))
+            .filter(|v| coronary_names.contains(&v.name.as_str()))
+            .map(|v| {
+                let r = v.flow_resistance();
+                if r > 0.0 { 1.0 / r } else { 0.0 }
+            })
+            .sum();
+
+        // Calculate total SYSTEMIC arterial conductance (excluding coronaries)
+        let total_systemic_conductance: f64 = self.vessels
+            .iter()
+            .filter(|v| matches!(v.vessel_type, VesselType::Artery))
+            .filter(|v| !coronary_names.contains(&v.name.as_str()))
+            .map(|v| {
+                let r = v.flow_resistance();
+                if r > 0.0 { 1.0 / r } else { 0.0 }
+            })
+            .sum();
+
+        // Coronary flow is ~5% of cardiac output at rest
+        // This represents the physiologic steal from aortic root
+        let total_coronary_flow = cardiac_output_ml_per_min * 0.05;
+        let total_systemic_flow = cardiac_output_ml_per_min * 0.95;
+
+        // Distribute flow to vessels
         for vessel in &mut self.vessels {
             match vessel.vessel_type {
                 VesselType::Artery => {
-                    // Major arteries split cardiac output
-                    let flow_fraction = vessel.blood_volume_ml / self.arterial_blood_volume_ml.max(1.0);
-                    vessel.blood_flow_rate_ml_per_min = cardiac_output_ml_per_min * flow_fraction * 0.3;
+                    let resistance = vessel.flow_resistance();
+                    let is_coronary = coronary_names.contains(&vessel.name.as_str());
+
+                    if is_coronary {
+                        // Coronary arteries: distribute 5% of CO by conductance
+                        if total_coronary_conductance > 0.0 && resistance > 0.0 {
+                            let conductance_fraction = (1.0 / resistance) / total_coronary_conductance;
+                            vessel.blood_flow_rate_ml_per_min = total_coronary_flow * conductance_fraction;
+                        } else {
+                            vessel.blood_flow_rate_ml_per_min = 0.0;
+                        }
+                    } else {
+                        // Systemic arteries: distribute remaining 95% of CO by conductance
+                        if total_systemic_conductance > 0.0 && resistance > 0.0 {
+                            let conductance_fraction = (1.0 / resistance) / total_systemic_conductance;
+                            vessel.blood_flow_rate_ml_per_min = total_systemic_flow * conductance_fraction;
+                        } else {
+                            vessel.blood_flow_rate_ml_per_min = 0.0;
+                        }
+                    }
                     vessel.calculate_velocity();
                 }
                 VesselType::Arteriole | VesselType::Capillary => {
@@ -362,6 +421,46 @@ impl VascularSystem {
             .filter(|v| matches!(v.vessel_type, VesselType::Vein))
             .map(|v| v.blood_flow_rate_ml_per_min)
             .sum()
+    }
+
+    /// Get a mutable reference to a vessel by name
+    pub fn get_vessel_mut(&mut self, name: &str) -> Option<&mut Vessel> {
+        self.vessels.iter_mut().find(|v| v.name == name)
+    }
+
+    /// Get a reference to a vessel by name
+    pub fn get_vessel(&self, name: &str) -> Option<&Vessel> {
+        self.vessels.iter().find(|v| v.name == name)
+    }
+
+    /// Induce plaque buildup in a specific vessel
+    pub fn add_plaque(&mut self, vessel_name: &str, plaque_amount: f64) {
+        if let Some(vessel) = self.get_vessel_mut(vessel_name) {
+            vessel.plaque_buildup = (vessel.plaque_buildup + plaque_amount).min(0.99);
+            vessel.calculate_volume();
+        }
+    }
+
+    /// Simulate plaque rupture leading to acute thrombosis
+    /// This is the mechanism of acute coronary syndrome!
+    pub fn rupture_plaque(&mut self, vessel_name: &str) {
+        if let Some(vessel) = self.get_vessel_mut(vessel_name) {
+            // Unstable plaque ruptures and triggers thrombosis
+            // This acutely increases stenosis from baseline plaque to near-complete occlusion
+            if vessel.plaque_buildup > 0.3 {
+                // Thrombus formation on ruptured plaque
+                vessel.plaque_buildup = (vessel.plaque_buildup + 0.5).min(0.95);
+                vessel.inflammation = 1.0;  // Acute inflammation
+                vessel.calculate_volume();
+            }
+        }
+    }
+
+    /// Get blood flow through a specific coronary artery
+    pub fn get_coronary_flow(&self, artery_name: &str) -> f64 {
+        self.get_vessel(artery_name)
+            .map(|v| v.blood_flow_rate_ml_per_min)
+            .unwrap_or(0.0)
     }
 }
 

@@ -106,29 +106,34 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           mkdir -p package
-          cp target/${{ matrix.target }}/release/examples/${{ matrix.example_binary }} package/
+          cp target/${{ matrix.target }}/release/examples/simulation package/
+          cp target/${{ matrix.target }}/release/examples/stemi_simulation package/
+          cp target/${{ matrix.target }}/release/examples/multi_organ_failure package/
           cp target/${{ matrix.target }}/release/${{ matrix.artifact_name }} package/
           cat > package/README.txt << 'EOF'
-          MedicalLib Simulation Example
-          ==============================
+          MedicalLib Simulation Examples
+          ===============================
 
-          This package contains a compiled example application demonstrating the
-          MedicalLib medical simulation library.
+          This package contains compiled example applications demonstrating the
+          MedicalLib medical simulation library with emergent pathophysiology.
 
           Contents:
-          - simulation: The example application binary
+          - simulation: Basic physiological simulation
+          - stemi_simulation: Emergent STEMI with cascading arrhythmias
+          - multi_organ_failure: Cascading multi-organ system failure
           - libmedicallib.so/dylib: The medical simulation library
 
           Usage:
-            ./simulation
+            ./simulation              # Basic example
+            ./stemi_simulation        # Watch STEMI → VT → VF → Asystole
+            ./multi_organ_failure     # Watch cardiac arrest → AKI → cascading failure
 
-          The simulation demonstrates:
-          - Patient initialization with organs
-          - Blood chemistry tracking
-          - Toxin processing by the liver
-          - Digestive system simulation
-          - Lung injury events
-          - Real-time physiological updates
+          Examples demonstrate:
+          - Emergent pathophysiology (not hardcoded!)
+          - STEMI: Plaque rupture → ischemia → arrhythmias → cardiac arrest
+          - AKI: Hypoperfusion → ATN → uremia → hyperkalemia
+          - Cascading organ failures and vicious cycles
+          - Real-time physiological tracking
 
           For more information, visit: https://github.com/matterleast/medicallib
           EOF
@@ -138,29 +143,34 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path package
-          Copy-Item target/${{ matrix.target }}/release/examples/${{ matrix.example_binary }} package/
+          Copy-Item target/${{ matrix.target }}/release/examples/simulation.exe package/
+          Copy-Item target/${{ matrix.target }}/release/examples/stemi_simulation.exe package/
+          Copy-Item target/${{ matrix.target }}/release/examples/multi_organ_failure.exe package/
           Copy-Item target/${{ matrix.target }}/release/${{ matrix.artifact_name }} package/
           @"
-          MedicalLib Simulation Example
-          ==============================
+          MedicalLib Simulation Examples
+          ===============================
 
-          This package contains a compiled example application demonstrating the
-          MedicalLib medical simulation library.
+          This package contains compiled example applications demonstrating the
+          MedicalLib medical simulation library with emergent pathophysiology.
 
           Contents:
-          - simulation.exe: The example application binary
+          - simulation.exe: Basic physiological simulation
+          - stemi_simulation.exe: Emergent STEMI with cascading arrhythmias
+          - multi_organ_failure.exe: Cascading multi-organ system failure
           - medicallib.dll: The medical simulation library
 
           Usage:
-            simulation.exe
+            simulation.exe              # Basic example
+            stemi_simulation.exe        # Watch STEMI -> VT -> VF -> Asystole
+            multi_organ_failure.exe     # Watch cardiac arrest -> AKI -> cascading failure
 
-          The simulation demonstrates:
-          - Patient initialization with organs
-          - Blood chemistry tracking
-          - Toxin processing by the liver
-          - Digestive system simulation
-          - Lung injury events
-          - Real-time physiological updates
+          Examples demonstrate:
+          - Emergent pathophysiology (not hardcoded!)
+          - STEMI: Plaque rupture -> ischemia -> arrhythmias -> cardiac arrest
+          - AKI: Hypoperfusion -> ATN -> uremia -> hyperkalemia
+          - Cascading organ failures and vicious cycles
+          - Real-time physiological tracking
 
           For more information, visit: https://github.com/matterleast/medicallib
           "@ | Out-File -FilePath package/README.txt -Encoding utf8
