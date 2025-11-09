@@ -227,6 +227,7 @@ pub struct MyocardialSegment {
     pub lactic_acid_mmol: f64,                // Anaerobic metabolism
     pub adenosine_au: f64,                    // Vasodilator released during ischemia
     pub troponin_release_ng_ml: f64,          // Marker of myocardial necrosis
+    pub total_ischemia_time_s: f64,           // Total time since first ischemia (never resets)
 
     // Electrical properties
     pub depolarization_time: f64,             // When this segment depolarizes in cycle
@@ -258,6 +259,7 @@ impl MyocardialSegment {
             lactic_acid_mmol: 0.0,
             adenosine_au: 0.0,
             troponin_release_ng_ml: 0.0,
+            total_ischemia_time_s: 0.0,
             depolarization_time: 0.0,
             repolarization_time: 0.0,
             ectopic_beats: VecDeque::new(),
@@ -293,6 +295,17 @@ impl MyocardialSegment {
         // Determine if tissue is ischemic
         let is_ischemic = self.oxygen_delivery_ml_per_min < self.oxygen_consumption_ml_per_min;
 
+        // Track total ischemia time (never resets, even across state transitions)
+        // This is needed for troponin timing - troponin rises 3-4h from MI onset, not from injury
+        if is_ischemic {
+            self.total_ischemia_time_s += delta_time_s;
+        } else {
+            // Reset if reperfused (tissue recovers)
+            if matches!(self.cellular_state, CellularState::Healthy) {
+                self.total_ischemia_time_s = 0.0;
+            }
+        }
+
         // Progress cellular state
         self.cellular_state.progress(is_ischemic, delta_time_s);
 
@@ -311,20 +324,35 @@ impl MyocardialSegment {
         }
 
         // Troponin release from injured/necrotic cells
+        // CRITICAL: Troponin timing is from MI ONSET (when ischemia began), not from state transitions!
+        // Clinically: troponin rises 3-4 hours post-MI, peaks 24-48h, elevated for 7-14 days
         match self.cellular_state {
-            CellularState::Injured { duration_seconds } => {
-                // Troponin starts rising after 3-4 hours of injury
-                if duration_seconds > 10800.0 {
-                    self.troponin_release_ng_ml += delta_time_s * 0.01;
+            CellularState::Injured { .. } => {
+                // Troponin starts rising 3-4 hours after MI onset (ischemia began)
+                if self.total_ischemia_time_s > 10800.0 {  // 3 hours from onset
+                    // Rising phase (3-24h): faster increase
+                    let hours_since_onset = self.total_ischemia_time_s / 3600.0;
+                    if hours_since_onset < 24.0 {
+                        self.troponin_release_ng_ml += delta_time_s * 0.02;  // Rising
+                    } else {
+                        self.troponin_release_ng_ml += delta_time_s * 0.01;  // Still elevated
+                    }
                 }
             }
             CellularState::Necrotic { days_old } => {
-                // Peak troponin 24-48 hours after infarction
-                if days_old < 2.0 {
-                    self.troponin_release_ng_ml += delta_time_s * 0.05;
-                } else {
-                    // Gradual decline
-                    self.troponin_release_ng_ml *= 0.98_f64.powf(delta_time_s);
+                // Troponin only starts rising 3-4 hours post-MI, even if tissue is already necrotic
+                if self.total_ischemia_time_s > 10800.0 {  // 3 hours from MI onset
+                    // Peak troponin 24-48 hours after infarction, then gradual decline
+                    if days_old < 2.0 {
+                        // Peak phase: maximum release
+                        self.troponin_release_ng_ml += delta_time_s * 0.05;
+                    } else if days_old < 7.0 {
+                        // Declining phase: slower release
+                        self.troponin_release_ng_ml += delta_time_s * 0.01;
+                    } else {
+                        // Slow decline after 7 days
+                        self.troponin_release_ng_ml *= 0.98_f64.powf(delta_time_s);
+                    }
                 }
             }
             _ => {}
