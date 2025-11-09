@@ -311,30 +311,64 @@ impl VascularSystem {
 
     /// Calculate blood flow rates through all vessels
     pub fn calculate_flow_rates(&mut self, cardiac_output_ml_per_min: f64) {
-        // Pre-calculate total arterial conductance (1/R) for parallel circuit
-        let total_arterial_conductance: f64 = self.vessels
+        // CRITICAL: Coronary arteries need special handling!
+        // They come off the aortic root and get ~5% of cardiac output (250 mL/min at rest)
+        // They should NOT compete with systemic arteries in the same parallel distribution
+
+        // Separate coronary arteries from systemic arteries
+        // Note: Left Main is excluded - it's a conduit that splits into LAD/LCx, not a parallel branch
+        let coronary_names = ["LAD", "LCx", "RCA"];
+
+        // Calculate total CORONARY conductance
+        let total_coronary_conductance: f64 = self.vessels
             .iter()
             .filter(|v| matches!(v.vessel_type, VesselType::Artery))
+            .filter(|v| coronary_names.contains(&v.name.as_str()))
             .map(|v| {
                 let r = v.flow_resistance();
                 if r > 0.0 { 1.0 / r } else { 0.0 }
             })
             .sum();
 
-        // Arteries receive blood from heart
+        // Calculate total SYSTEMIC arterial conductance (excluding coronaries)
+        let total_systemic_conductance: f64 = self.vessels
+            .iter()
+            .filter(|v| matches!(v.vessel_type, VesselType::Artery))
+            .filter(|v| !coronary_names.contains(&v.name.as_str()))
+            .map(|v| {
+                let r = v.flow_resistance();
+                if r > 0.0 { 1.0 / r } else { 0.0 }
+            })
+            .sum();
+
+        // Coronary flow is ~5% of cardiac output at rest
+        // This represents the physiologic steal from aortic root
+        let total_coronary_flow = cardiac_output_ml_per_min * 0.05;
+        let total_systemic_flow = cardiac_output_ml_per_min * 0.95;
+
+        // Distribute flow to vessels
         for vessel in &mut self.vessels {
             match vessel.vessel_type {
                 VesselType::Artery => {
-                    // Flow inversely proportional to resistance (parallel circuit)
-                    // Q = ΔP / R, where total flow is distributed by conductance
                     let resistance = vessel.flow_resistance();
+                    let is_coronary = coronary_names.contains(&vessel.name.as_str());
 
-                    if total_arterial_conductance > 0.0 && resistance > 0.0 {
-                        // Conductance fraction = (1/R) / Σ(1/R)
-                        let conductance_fraction = (1.0 / resistance) / total_arterial_conductance;
-                        vessel.blood_flow_rate_ml_per_min = cardiac_output_ml_per_min * conductance_fraction * 0.25;
+                    if is_coronary {
+                        // Coronary arteries: distribute 5% of CO by conductance
+                        if total_coronary_conductance > 0.0 && resistance > 0.0 {
+                            let conductance_fraction = (1.0 / resistance) / total_coronary_conductance;
+                            vessel.blood_flow_rate_ml_per_min = total_coronary_flow * conductance_fraction;
+                        } else {
+                            vessel.blood_flow_rate_ml_per_min = 0.0;
+                        }
                     } else {
-                        vessel.blood_flow_rate_ml_per_min = 0.0;
+                        // Systemic arteries: distribute remaining 95% of CO by conductance
+                        if total_systemic_conductance > 0.0 && resistance > 0.0 {
+                            let conductance_fraction = (1.0 / resistance) / total_systemic_conductance;
+                            vessel.blood_flow_rate_ml_per_min = total_systemic_flow * conductance_fraction;
+                        } else {
+                            vessel.blood_flow_rate_ml_per_min = 0.0;
+                        }
                     }
                     vessel.calculate_velocity();
                 }
