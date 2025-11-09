@@ -350,6 +350,17 @@ impl Heart {
             .filter(|s| matches!(s.cellular_state, CellularState::Necrotic { .. }))
             .count();
 
+        // Update sinus rhythm subtype based on heart rate
+        if matches!(self.rhythm, Rhythm::Sinus | Rhythm::SinusTachycardia | Rhythm::SinusBradycardia) {
+            if self.heart_rate_bpm > 100.0 {
+                self.rhythm = Rhythm::SinusTachycardia;
+            } else if self.heart_rate_bpm < 60.0 {
+                self.rhythm = Rhythm::SinusBradycardia;
+            } else {
+                self.rhythm = Rhythm::Sinus;
+            }
+        }
+
         // Rhythm progression logic - emergent from tissue state!
         match self.rhythm {
             Rhythm::Sinus | Rhythm::SinusTachycardia | Rhythm::SinusBradycardia => {
@@ -427,9 +438,11 @@ impl Heart {
     /// Get chest pain level from ischemic myocardium
     pub fn get_chest_pain_level(&self) -> f64 {
         // Lactic acid and adenosine from ischemic tissue causes pain
+        // Increased coefficients to match clinical reality: severe ischemic chest pain (8-10/10)
+        // develops within 2-5 minutes of acute coronary occlusion
         self.myocardial_segments
             .iter()
-            .map(|s| s.lactic_acid_mmol * 0.1 + s.adenosine_au * 0.2)
+            .map(|s| s.lactic_acid_mmol * 0.3 + s.adenosine_au * 0.6)
             .sum::<f64>()
             .min(10.0)
     }
@@ -532,6 +545,19 @@ impl Organ for Heart {
         if patient.blood.chemistry.toxin_level_au > 50.0 {
             let toxin_effect = (patient.blood.chemistry.toxin_level_au - 50.0) * 0.1;
             self.heart_rate_bpm = (self.baseline_heart_rate_bpm - toxin_effect).max(40.0);
+        }
+
+        // 8. Sympathetic response to chest pain (stress/pain response)
+        // Chest pain triggers catecholamine release (epinephrine/norepinephrine) → increased HR
+        // Only applies to non-arrest rhythms
+        if !self.is_cardiac_arrest() {
+            let chest_pain_level = self.get_chest_pain_level();
+            if chest_pain_level > 1.0 {
+                // Pain above 1/10 triggers sympathetic activation
+                // Severe pain (10/10) can increase HR by 30-50 bpm
+                let sympathetic_hr_increase = (chest_pain_level - 1.0) * 5.0;
+                self.heart_rate_bpm = (self.baseline_heart_rate_bpm + sympathetic_hr_increase).min(150.0);
+            }
         }
     }
 

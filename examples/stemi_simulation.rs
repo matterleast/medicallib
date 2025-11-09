@@ -66,7 +66,8 @@ fn main() {
     thread::sleep(Duration::from_millis(1500));
 
     // Now simulate for several minutes and watch the cascade unfold
-    let simulation_time_s = 300.0; // 5 minutes
+    // Extended to 30 minutes to see full progression: Ischemic → Injured → PVCs → VT → VF
+    let simulation_time_s = 1800.0; // 30 minutes
     let delta_time_s = 0.5;
     let num_steps = (simulation_time_s / delta_time_s) as i32;
 

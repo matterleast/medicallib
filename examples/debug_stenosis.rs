@@ -171,12 +171,17 @@ fn main() {
             println!("\n--- Time: {:.0}s ---", time_s);
 
             if let Some(heart) = patient.get_organ::<heart::Heart>("Heart") {
+                let total_chest_pain = heart.get_chest_pain_level();
+                println!("  Heart:");
+                println!("    Heart rate: {:.0} bpm", heart.heart_rate_bpm);
+                println!("    Rhythm: {:?}", heart.rhythm);
+                println!("    Chest pain: {:.1}/10", total_chest_pain);
+
                 for segment in &heart.myocardial_segments {
                     if matches!(segment.region, myocardial_tissue::MyocardialRegion::Anterior) {
                         println!("  Anterior segment:");
                         println!("    Flow: {:.2} mL/min", segment.blood_flow_ml_per_min);
                         println!("    State: {:?}", segment.cellular_state);
-                        println!("    Chest pain: {:.1}/10", segment.lactic_acid_mmol * 0.1 + segment.adenosine_au * 0.2);
                     }
                 }
             }
