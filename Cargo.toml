@@ -27,3 +27,7 @@ path = "examples/stemi_simulation.rs"
 [[example]]
 name = "multi_organ_failure"
 path = "examples/multi_organ_failure.rs"
+
+[[example]]
+name = "debug_stenosis"
+path = "examples/debug_stenosis.rs"

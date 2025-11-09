@@ -314,42 +314,17 @@ impl Heart {
         // O2 content = (Hgb × 1.34 × SaO2) + (0.003 × PaO2)
         let arterial_o2_content = (hgb * 1.34 * sao2) + (0.003 * pao2);
 
-        // Get vascular system to check coronary flow
-        // We need to find the vascular system organ
-        let lad_flow = 40.0;  // Default flow - will be updated
-        let lcx_flow = 30.0;
-        let rca_flow = 35.0;
+        // Get coronary flows from blood (updated by update_patient before organ updates)
+        let lad_flow_actual = patient.blood.coronary_lad_flow;
+        let lcx_flow_actual = patient.blood.coronary_lcx_flow;
+        let rca_flow_actual = patient.blood.coronary_rca_flow;
 
-        // Try to get actual coronary flows from vascular system
-        for organ in patient.organs() {
-            if organ.get_type() == "VascularSystem" {
-                if let Some(vascular) = organ.as_any().downcast_ref::<crate::organs::vascular::VascularSystem>() {
-                    // Update flows from actual vascular system
-                    let lad_flow_actual = vascular.get_coronary_flow("LAD");
-                    let lcx_flow_actual = vascular.get_coronary_flow("LCx");
-                    let rca_flow_actual = vascular.get_coronary_flow("RCA");
-
-                    // Update each segment based on its supplying artery
-                    for segment in &mut self.myocardial_segments {
-                        let flow = match segment.region {
-                            MyocardialRegion::Anterior | MyocardialRegion::Septal => lad_flow_actual,
-                            MyocardialRegion::Lateral => lcx_flow_actual,
-                            MyocardialRegion::Inferior | MyocardialRegion::Posterior | MyocardialRegion::RightVentricular => rca_flow_actual,
-                        };
-
-                        segment.update(flow, arterial_o2_content, delta_time_s);
-                    }
-                    return;
-                }
-            }
-        }
-
-        // Fallback: use default flows if vascular system not found
+        // Update each segment based on its supplying artery
         for segment in &mut self.myocardial_segments {
             let flow = match segment.region {
-                MyocardialRegion::Anterior | MyocardialRegion::Septal => lad_flow,
-                MyocardialRegion::Lateral => lcx_flow,
-                MyocardialRegion::Inferior | MyocardialRegion::Posterior | MyocardialRegion::RightVentricular => rca_flow,
+                MyocardialRegion::Anterior | MyocardialRegion::Septal => lad_flow_actual,
+                MyocardialRegion::Lateral => lcx_flow_actual,
+                MyocardialRegion::Inferior | MyocardialRegion::Posterior | MyocardialRegion::RightVentricular => rca_flow_actual,
             };
 
             segment.update(flow, arterial_o2_content, delta_time_s);
