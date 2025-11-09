@@ -137,8 +137,11 @@ impl CellularState {
             CellularState::Healthy | CellularState::Ischemic { .. } => 0.0,
             CellularState::Injured { duration_seconds } => {
                 // Injured cells can fire spontaneously (PVCs)
-                if *duration_seconds > 600.0 {  // After 10 min of injury
-                    (duration_seconds - 600.0) / 1800.0 * 30.0  // Up to 30 ectopic beats/min
+                // Clinically: PVCs start within 2-5 minutes of myocardial injury
+                if *duration_seconds > 120.0 {  // After 2 min of injury
+                    let time_since_onset = duration_seconds - 120.0;
+                    // Ramp up over 10 minutes to 30 ectopic beats/min
+                    (time_since_onset / 600.0 * 30.0).min(30.0)
                 } else {
                     0.0
                 }
@@ -387,8 +390,9 @@ impl MyocardialSegment {
             *beat_time += delta_time_s;
         }
 
-        // Remove old ectopic beats
-        while self.ectopic_beats.front().map_or(false, |&t| t > 2.0) {
+        // Remove ectopic beats older than 60 seconds (track PVCs over last minute)
+        // This allows ectopic beats to accumulate and trigger VT/VF progression
+        while self.ectopic_beats.front().map_or(false, |&t| t > 60.0) {
             self.ectopic_beats.pop_front();
         }
     }
